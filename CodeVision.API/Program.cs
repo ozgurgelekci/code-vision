@@ -107,11 +107,19 @@ using (var scope = app.Services.CreateScope())
         
         logger.LogInformation("🔄 Starting database migration...");
         
-        // Check if database exists and apply migrations
-        if (dbContext.Database.GetPendingMigrations().Any())
+        // Ensure database exists and apply migrations
+        logger.LogInformation("🔍 Checking database and migrations...");
+        
+        // Create database if it doesn't exist  
+        await dbContext.Database.EnsureCreatedAsync();
+        
+        // Apply all pending migrations
+        var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
+        
+        if (pendingMigrations.Any())
         {
-            logger.LogInformation("⏳ Applying {Count} pending migrations...", 
-                dbContext.Database.GetPendingMigrations().Count());
+            logger.LogInformation("⏳ Applying {Count} pending migrations: {Migrations}", 
+                pendingMigrations.Count(), string.Join(", ", pendingMigrations));
             
             await dbContext.Database.MigrateAsync();
             
