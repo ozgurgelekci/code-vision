@@ -5,8 +5,25 @@ using CodeVision.Infrastructure.Repositories;
 using CodeVision.Infrastructure.Services;
 using CodeVision.Infrastructure.Hubs;
 using CodeVision.Core.Configuration;
+using Microsoft.AspNetCore.HostFiltering;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Railway host validation fix - disable for production
+if (builder.Environment.IsProduction())
+{
+    builder.WebHost.UseKestrel(options =>
+    {
+        options.AllowSynchronousIO = true;
+    });
+    
+    // Accept any host for Railway deployment
+    builder.Services.Configure<HostFilteringOptions>(options =>
+    {
+        options.AllowedHosts.Clear();
+        options.AllowEmptyHosts = true;
+    });
+}
 
 // Development configuration
 if (builder.Environment.IsDevelopment())
