@@ -73,16 +73,27 @@ if (!string.IsNullOrEmpty(connectionString) &&
 }
 else
 {
-    // Development - SQLite fallback
+    // Development - check DefaultConnection for PostgreSQL or SQLite
     var fallbackConnection = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=codevision.db";
-    builder.Services.AddDbContext<CodeVisionDbContext>(options =>
-        options.UseSqlite(fallbackConnection));
-        
-    Console.WriteLine($"💾 Using SQLite: {fallbackConnection}");
+    
+    if (fallbackConnection.Contains("Host=") && fallbackConnection.Contains("Database="))
+    {
+        // PostgreSQL connection string detected
+        builder.Services.AddDbContext<CodeVisionDbContext>(options =>
+            options.UseNpgsql(fallbackConnection));
+        Console.WriteLine($"🐘 Development PostgreSQL: {fallbackConnection.Replace("Password=", "Password=***").Split(';')[0]}..."); 
+    }
+    else
+    {
+        // SQLite fallback
+        builder.Services.AddDbContext<CodeVisionDbContext>(options =>
+            options.UseSqlite(fallbackConnection));
+        Console.WriteLine($"💾 Using SQLite: {fallbackConnection}");
+    }
     
     if (string.IsNullOrEmpty(connectionString))
     {
-        Console.WriteLine("⚠️  DATABASE_URL not found, using SQLite for development");
+        Console.WriteLine("⚠️  DATABASE_URL not found, using DefaultConnection");
     }
 }
 
