@@ -40,7 +40,11 @@ public class PullRequestAnalysisService : IPullRequestAnalysisService
             Status = AnalysisStatus.Pending,
             QualityScore = 0,
             RiskLevel = RiskLevel.Low,
-            ProcessedAt = DateTime.UtcNow
+            ProcessedAt = DateTime.UtcNow,
+            RoslynFindings = "[]", // Empty JSON array for PostgreSQL jsonb
+            GptSuggestions = "[]", // Empty JSON array for PostgreSQL jsonb
+            Summary = "", // Initialize summary
+            RawDiff = "" // Initialize raw diff
         };
 
         return await _repository.AddAsync(analysis);
