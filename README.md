@@ -48,11 +48,11 @@ cp env.example .env
 nano .env  # veya favori editörünüz
 ```
 
-**Gerekli ayarlar:**
+**Railway Environment Variables:**
 ```bash
-OPENAI_API_KEY=sk-your-openai-api-key-here
-GITHUB_WEBHOOK_SECRET=your-webhook-secret-here
-GITHUB_TOKEN=ghp_your-github-token-here
+OpenAI__ApiKey=sk-your-openai-api-key-here
+GitHub__WebhookSecret=codevision-webhook-2025
+GitHub__Token=ghp_your-github-token-here
 ```
 
 #### 3. Hızlı Başlatma
@@ -116,7 +116,7 @@ dotnet run
 ```json
 {
   "GitHub": {
-    "WebhookSecret": "your-secret",
+    "WebhookSecret": "codevision-webhook-2025",
     "Token": "ghp_...",
     "ApiUrl": "https://api.github.com"
   }
