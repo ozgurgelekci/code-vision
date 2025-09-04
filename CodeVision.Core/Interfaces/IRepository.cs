@@ -4,7 +4,7 @@ namespace CodeVision.Core.Interfaces;
 
 public interface IRepository<TEntity> where TEntity : class
 {
-    Task<TEntity?> GetByIdAsync(Guid id);
+    Task<TEntity?> GetByIdAsync(string id);
     Task<List<TEntity>> GetAllAsync();
     Task<List<TEntity>> FindAsync(Expression<Func<TEntity, bool>> predicate);
     Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate);

@@ -67,7 +67,7 @@ public class GitHubWebhookController : ControllerBase
 
             var job = new AnalysisJob
             {
-                Id = Guid.NewGuid(),
+                Id = Guid.NewGuid().ToString(),
                 AnalysisId = analysis.Id,
                 RepoName = payload.Repository.FullName,
                 PrNumber = payload.PullRequest.Number,

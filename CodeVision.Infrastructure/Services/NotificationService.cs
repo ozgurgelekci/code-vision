@@ -24,7 +24,7 @@ public class NotificationService : INotificationService
         _logger = logger;
     }
 
-    public async Task SendAnalysisStartedAsync(Guid analysisId)
+    public async Task SendAnalysisStartedAsync(string analysisId)
     {
         try
         {
@@ -37,7 +37,7 @@ public class NotificationService : INotificationService
 
             var notification = new AnalysisNotification
             {
-                Id = Guid.NewGuid(),
+                Id = Guid.NewGuid().ToString(),
                 PullRequestAnalysisId = analysisId,
                 Message = $"PR #{analysis.PrNumber} analizi başladı - {analysis.RepoName}",
                 Type = NotificationType.AnalysisStarted,
@@ -72,7 +72,7 @@ public class NotificationService : INotificationService
         }
     }
 
-    public async Task SendAnalysisCompletedAsync(Guid analysisId, int qualityScore, RiskLevel riskLevel)
+    public async Task SendAnalysisCompletedAsync(string analysisId, int qualityScore, RiskLevel riskLevel)
     {
         try
         {
@@ -85,7 +85,7 @@ public class NotificationService : INotificationService
 
             var notification = new AnalysisNotification
             {
-                Id = Guid.NewGuid(),
+                Id = Guid.NewGuid().ToString(),
                 PullRequestAnalysisId = analysisId,
                 Message = $"PR #{analysis.PrNumber} analizi tamamlandı - Skor: {qualityScore}, Risk: {riskLevel}",
                 Type = NotificationType.AnalysisCompleted,
@@ -122,7 +122,7 @@ public class NotificationService : INotificationService
         }
     }
 
-    public async Task SendAnalysisFailedAsync(Guid analysisId, string errorMessage)
+    public async Task SendAnalysisFailedAsync(string analysisId, string errorMessage)
     {
         try
         {
@@ -135,7 +135,7 @@ public class NotificationService : INotificationService
 
             var notification = new AnalysisNotification
             {
-                Id = Guid.NewGuid(),
+                Id = Guid.NewGuid().ToString(),
                 PullRequestAnalysisId = analysisId,
                 Message = $"PR #{analysis.PrNumber} analizi başarısız - Hata: {errorMessage}",
                 Type = NotificationType.AnalysisFailed,
@@ -171,7 +171,7 @@ public class NotificationService : INotificationService
         }
     }
 
-    public async Task SendHighRiskDetectedAsync(Guid analysisId, List<RoslynFinding> criticalFindings)
+    public async Task SendHighRiskDetectedAsync(string analysisId, List<RoslynFinding> criticalFindings)
     {
         try
         {
@@ -185,7 +185,7 @@ public class NotificationService : INotificationService
             var criticalCount = criticalFindings.Count(f => f.Severity == Severity.Error);
             var notification = new AnalysisNotification
             {
-                Id = Guid.NewGuid(),
+                Id = Guid.NewGuid().ToString(),
                 PullRequestAnalysisId = analysisId,
                 Message = $"YÜKSEK RİSK: PR #{analysis.PrNumber} - {criticalCount} kritik sorun tespit edildi",
                 Type = NotificationType.HighRiskDetected,
@@ -241,7 +241,7 @@ public class NotificationService : INotificationService
             .ToListAsync();
     }
 
-    public async Task<bool> MarkAsReadAsync(Guid notificationId)
+    public async Task<bool> MarkAsReadAsync(string notificationId)
     {
         var notification = await _context.AnalysisNotifications.FindAsync(notificationId);
         if (notification == null)
