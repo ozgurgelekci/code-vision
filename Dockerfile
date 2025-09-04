@@ -31,9 +31,7 @@ FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
-# Railway configuration
-ENV ASPNETCORE_URLS=http://0.0.0.0:8080
+# Railway configuration - use dynamic PORT
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_HTTP_PORTS=8080
 
 ENTRYPOINT ["dotnet", "CodeVision.API.dll"]
