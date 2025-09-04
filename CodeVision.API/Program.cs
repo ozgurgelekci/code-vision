@@ -5,21 +5,13 @@ using CodeVision.Infrastructure.Repositories;
 using CodeVision.Infrastructure.Services;
 using CodeVision.Infrastructure.Hubs;
 using CodeVision.Core.Configuration;
-using Microsoft.AspNetCore.HostFiltering;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Railway configuration - completely bypass host validation
+// Railway configuration - simple and effective
 if (builder.Environment.IsProduction())
 {
-    // Completely disable host filtering for Railway
-    builder.Services.PostConfigure<HostFilteringOptions>(options =>
-    {
-        options.AllowedHosts.Clear();
-        options.AllowEmptyHosts = true;
-    });
-    
-    // Configure Kestrel to accept any host
+    // Configure Kestrel for Railway
     builder.WebHost.ConfigureKestrel(options =>
     {
         var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
@@ -27,7 +19,10 @@ if (builder.Environment.IsProduction())
         Console.WriteLine($"🚀 Railway Kestrel - Listening on ANY IP, PORT: {port}");
     });
     
-    Console.WriteLine($"🌐 Railway Production Mode - All host validation disabled");
+    // Set AllowedHosts to accept all
+    builder.Configuration["AllowedHosts"] = "*";
+    
+    Console.WriteLine($"🌐 Railway Production Mode - Accepting all hosts");
 }
 
 // Development configuration
