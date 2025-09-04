@@ -9,22 +9,25 @@ using Microsoft.AspNetCore.HostFiltering;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Railway configuration - use environment variable approach
+// Railway configuration - completely bypass host validation
 if (builder.Environment.IsProduction())
 {
-    // Disable host validation for Railway
-    builder.Services.Configure<HostFilteringOptions>(options =>
+    // Completely disable host filtering for Railway
+    builder.Services.PostConfigure<HostFilteringOptions>(options =>
     {
         options.AllowedHosts.Clear();
         options.AllowEmptyHosts = true;
     });
     
-    // Set ASPNETCORE_URLS for Railway (avoids HTTP_PORTS conflict)
-    var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-    Environment.SetEnvironmentVariable("ASPNETCORE_URLS", $"http://0.0.0.0:{port}");
+    // Configure Kestrel to accept any host
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+        options.ListenAnyIP(int.Parse(port));
+        Console.WriteLine($"🚀 Railway Kestrel - Listening on ANY IP, PORT: {port}");
+    });
     
-    Console.WriteLine($"🚀 Railway Production Mode - PORT: {port}");
-    Console.WriteLine($"🌐 ASPNETCORE_URLS set to: http://0.0.0.0:{port}");
+    Console.WriteLine($"🌐 Railway Production Mode - All host validation disabled");
 }
 
 // Development configuration
