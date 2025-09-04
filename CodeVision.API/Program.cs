@@ -24,21 +24,49 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Database - Railway uses DATABASE_URL environment variable
-var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL") 
-    ?? builder.Configuration.GetConnectionString("DefaultConnection");
+// Database - Railway PostgreSQL connection handling
+var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
 
-if (connectionString?.Contains("postgresql://") == true || connectionString?.Contains("postgres://") == true)
+if (!string.IsNullOrEmpty(connectionString) && 
+    (connectionString.Contains("postgresql://") || connectionString.Contains("postgres://")))
 {
-    // PostgreSQL for production (Railway)
-    builder.Services.AddDbContext<CodeVisionDbContext>(options =>
-        options.UseNpgsql(connectionString));
+    try
+    {
+        // Railway PostgreSQL - convert DATABASE_URL to Npgsql format
+        var uri = new Uri(connectionString);
+        var userInfo = uri.UserInfo.Split(':');
+        var npgsqlConnectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.LocalPath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+        
+        builder.Services.AddDbContext<CodeVisionDbContext>(options =>
+            options.UseNpgsql(npgsqlConnectionString));
+            
+        Console.WriteLine($"🐘 PostgreSQL connected: Host={uri.Host}, DB={uri.LocalPath.TrimStart('/')}, User={userInfo[0]}");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ PostgreSQL connection parsing failed: {ex.Message}");
+        Console.WriteLine($"🔗 DATABASE_URL: {connectionString}");
+        
+        // Fallback to SQLite on connection string error
+        var fallbackConnection = "Data Source=codevision.db";
+        builder.Services.AddDbContext<CodeVisionDbContext>(options =>
+            options.UseSqlite(fallbackConnection));
+        Console.WriteLine($"💾 Fallback to SQLite: {fallbackConnection}");
+    }
 }
 else
 {
-    // SQLite for development
+    // Development - SQLite fallback
+    var fallbackConnection = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=codevision.db";
     builder.Services.AddDbContext<CodeVisionDbContext>(options =>
-        options.UseSqlite(connectionString ?? "Data Source=codevision.db"));
+        options.UseSqlite(fallbackConnection));
+        
+    Console.WriteLine($"💾 Using SQLite: {fallbackConnection}");
+    
+    if (string.IsNullOrEmpty(connectionString))
+    {
+        Console.WriteLine("⚠️  DATABASE_URL not found, using SQLite for development");
+    }
 }
 
 // Repository & Services
