@@ -9,6 +9,13 @@ public class CodeVisionDbContext : DbContext
     {
     }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        // Suppress pending model changes warning for Railway deployment
+        optionsBuilder.ConfigureWarnings(warnings =>
+            warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+    }
+
     public DbSet<PullRequestAnalysis> PullRequestAnalyses { get; set; }
     public DbSet<AnalysisNotification> AnalysisNotifications { get; set; }
 
