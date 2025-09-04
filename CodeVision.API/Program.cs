@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.HostFiltering;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Railway configuration - simplified approach
+// Railway configuration - use environment variable approach
 if (builder.Environment.IsProduction())
 {
     // Disable host validation for Railway
@@ -19,11 +19,12 @@ if (builder.Environment.IsProduction())
         options.AllowEmptyHosts = true;
     });
     
-    // Use Railway's PORT environment variable
+    // Set ASPNETCORE_URLS for Railway (avoids HTTP_PORTS conflict)
     var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+    Environment.SetEnvironmentVariable("ASPNETCORE_URLS", $"http://0.0.0.0:{port}");
     
     Console.WriteLine($"🚀 Railway Production Mode - PORT: {port}");
+    Console.WriteLine($"🌐 ASPNETCORE_URLS set to: http://0.0.0.0:{port}");
 }
 
 // Development configuration
@@ -117,6 +118,7 @@ var app = builder.Build();
 
 Console.WriteLine($"🌐 Environment: {app.Environment.EnvironmentName}");
 Console.WriteLine($"🔗 App URLs: {string.Join(", ", app.Urls)}");
+Console.WriteLine($"📍 ASPNETCORE_URLS: {Environment.GetEnvironmentVariable("ASPNETCORE_URLS")}");
 
 // Automatic database migration for Railway deployment  
 using (var scope = app.Services.CreateScope())
