@@ -2,8 +2,8 @@ namespace CodeVision.Core.Models;
 
 public class AnalysisJob
 {
-    public Guid Id { get; set; }
-    public Guid AnalysisId { get; set; }
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public string AnalysisId { get; set; } = string.Empty;
     public string RepoName { get; set; } = string.Empty;
     public int PrNumber { get; set; }
     public string PrTitle { get; set; } = string.Empty;

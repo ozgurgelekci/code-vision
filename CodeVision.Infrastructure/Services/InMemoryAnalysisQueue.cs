@@ -8,8 +8,8 @@ namespace CodeVision.Infrastructure.Services;
 public class InMemoryAnalysisQueue : IAnalysisQueue
 {
     private readonly ConcurrentQueue<AnalysisJob> _queue = new();
-    private readonly ConcurrentDictionary<Guid, AnalysisJob> _jobsInProgress = new();
-    private readonly ConcurrentDictionary<Guid, AnalysisJob> _completedJobs = new();
+    private readonly ConcurrentDictionary<string, AnalysisJob> _jobsInProgress = new();
+    private readonly ConcurrentDictionary<string, AnalysisJob> _completedJobs = new();
     private readonly SemaphoreSlim _semaphore = new(0);
     private readonly ILogger<InMemoryAnalysisQueue> _logger;
 
@@ -50,7 +50,7 @@ public class InMemoryAnalysisQueue : IAnalysisQueue
         return null;
     }
 
-    public async Task CompleteJobAsync(Guid jobId)
+    public async Task CompleteJobAsync(string jobId)
     {
         if (_jobsInProgress.TryRemove(jobId, out var job))
         {
@@ -64,7 +64,7 @@ public class InMemoryAnalysisQueue : IAnalysisQueue
         await Task.CompletedTask;
     }
 
-    public async Task FailJobAsync(Guid jobId, string errorMessage)
+    public async Task FailJobAsync(string jobId, string errorMessage)
     {
         if (_jobsInProgress.TryRemove(jobId, out var job))
         {

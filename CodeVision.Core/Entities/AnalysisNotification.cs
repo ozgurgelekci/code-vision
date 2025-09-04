@@ -2,8 +2,8 @@ namespace CodeVision.Core.Entities;
 
 public class AnalysisNotification
 {
-    public Guid Id { get; set; }
-    public Guid PullRequestAnalysisId { get; set; }
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public string PullRequestAnalysisId { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
     public NotificationType Type { get; set; }
     public DateTime CreatedAt { get; set; }

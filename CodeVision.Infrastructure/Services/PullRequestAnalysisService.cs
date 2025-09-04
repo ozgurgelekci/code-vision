@@ -32,7 +32,7 @@ public class PullRequestAnalysisService : IPullRequestAnalysisService
 
         var analysis = new PullRequestAnalysis
         {
-            Id = Guid.NewGuid(),
+            Id = Guid.NewGuid().ToString(),
             RepoName = repoName,
             PrNumber = prNumber,
             PrTitle = prTitle,
@@ -50,7 +50,7 @@ public class PullRequestAnalysisService : IPullRequestAnalysisService
         return await _repository.AddAsync(analysis);
     }
 
-    public async Task<PullRequestAnalysis?> GetAnalysisAsync(Guid id)
+    public async Task<PullRequestAnalysis?> GetAnalysisAsync(string id)
     {
         return await _context.PullRequestAnalyses
             .Include(a => a.Notifications)
@@ -80,7 +80,7 @@ public class PullRequestAnalysisService : IPullRequestAnalysisService
         return analysis;
     }
 
-    public async Task<bool> DeleteAnalysisAsync(Guid id)
+    public async Task<bool> DeleteAnalysisAsync(string id)
     {
         var analysis = await _repository.GetByIdAsync(id);
         if (analysis == null)
