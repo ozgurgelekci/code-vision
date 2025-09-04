@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeVision.Infrastructure",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeVision.UI", "CodeVision.UI\CodeVision.UI.csproj", "{49C0EC0A-5BE3-4E92-9AF4-E6BCA3247F8D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject", "TestProject\TestProject.csproj", "{A5BBC0A7-B3F8-477F-AF76-EE5B57793CB4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{49C0EC0A-5BE3-4E92-9AF4-E6BCA3247F8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{49C0EC0A-5BE3-4E92-9AF4-E6BCA3247F8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{49C0EC0A-5BE3-4E92-9AF4-E6BCA3247F8D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A5BBC0A7-B3F8-477F-AF76-EE5B57793CB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5BBC0A7-B3F8-477F-AF76-EE5B57793CB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5BBC0A7-B3F8-477F-AF76-EE5B57793CB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5BBC0A7-B3F8-477F-AF76-EE5B57793CB4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
