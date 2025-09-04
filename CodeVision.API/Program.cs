@@ -69,11 +69,39 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Database migration
+// Automatic database migration for Railway deployment  
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<CodeVisionDbContext>();
-    await context.Database.MigrateAsync();
+    try
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<CodeVisionDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        
+        logger.LogInformation("🔄 Starting database migration...");
+        
+        // Check if database exists and apply migrations
+        if (dbContext.Database.GetPendingMigrations().Any())
+        {
+            logger.LogInformation("⏳ Applying {Count} pending migrations...", 
+                dbContext.Database.GetPendingMigrations().Count());
+            
+            await dbContext.Database.MigrateAsync();
+            
+            logger.LogInformation("✅ Database migration completed successfully!");
+        }
+        else
+        {
+            logger.LogInformation("✅ Database is up to date, no migrations needed.");
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "❌ Database migration failed: {Error}", ex.Message);
+        
+        // Continue startup even if migration fails (for Railway cold starts)
+        logger.LogWarning("⚠️  App starting without database migration...");
+    }
 }
 
 // Configure pipeline
@@ -81,6 +109,16 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+else
+{
+    // Production için de Swagger göster (Railway'de API test için)
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "CodeVision API v1");
+        c.RoutePrefix = "swagger"; // /swagger URL'de açılır
+    });
 }
 
 app.UseCors("AllowUI");
