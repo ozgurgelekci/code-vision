@@ -1,0 +1,247 @@
+﻿@page "/"
+@using CodeVision.UI.Services
+@inject IApiService ApiService
+@rendermode InteractiveServer
+
+<PageTitle>Dashboard - CodeVision</PageTitle>
+
+<div class="dashboard-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-content">
+            <div class="page-info">
+                <h1 class="page-title">Dashboard</h1>
+                <p class="page-description">AI destekli kod analizi ve kalite metrikleri</p>
+            </div>
+            <div class="page-actions">
+                <button class="refresh-btn" @onclick="RefreshData" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <div class="refresh-spinner"></div>
+                    }
+                    else
+                    {
+                        <i class="bi bi-arrow-clockwise"></i>
+                    }
+                    <span>Yenile</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metrics Cards -->
+    <div class="metrics-grid">
+        @if (isLoading)
+        {
+            <!-- Loading State -->
+            @for (int i = 0; i < 4; i++)
+            {
+                <div class="metric-card loading">
+                    <div class="metric-icon skeleton"></div>
+                    <div class="metric-content">
+                        <div class="metric-value skeleton-text"></div>
+                        <div class="metric-label skeleton-text"></div>
+                    </div>
+                    <div class="metric-trend skeleton-trend"></div>
+                </div>
+            }
+        }
+        else
+        {
+            <!-- Total Analyses -->
+            <div class="metric-card metric-primary">
+                <div class="metric-icon">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value">@dashboardData?.TotalAnalyses</div>
+                    <div class="metric-label">Toplam Analiz</div>
+                </div>
+                <div class="metric-trend trend-up">
+                    <i class="bi bi-arrow-up"></i>
+                    <span>+12%</span>
+                </div>
+            </div>
+
+            <!-- Average Quality -->
+            <div class="metric-card metric-success">
+                <div class="metric-icon">
+                    <i class="bi bi-award"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value">@((int)(dashboardData?.AverageQuality ?? 0))</div>
+                    <div class="metric-label">Ortalama Kalite</div>
+                </div>
+                <div class="metric-trend trend-up">
+                    <i class="bi bi-arrow-up"></i>
+                    <span>+5%</span>
+                </div>
+            </div>
+
+            <!-- Pending Analyses -->
+            <div class="metric-card metric-warning">
+                <div class="metric-icon">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value">@dashboardData?.PendingAnalyses</div>
+                    <div class="metric-label">Bekleyen</div>
+                </div>
+                <div class="metric-trend trend-neutral">
+                    <i class="bi bi-dash"></i>
+                    <span>0%</span>
+                </div>
+            </div>
+
+            <!-- High Risk -->
+            <div class="metric-card metric-danger">
+                <div class="metric-icon">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value">@dashboardData?.HighRiskCount</div>
+                    <div class="metric-label">Yüksek Risk</div>
+                </div>
+                <div class="metric-trend trend-down">
+                    <i class="bi bi-arrow-down"></i>
+                    <span>-8%</span>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Recent Analyses Only -->
+    @if (recentAnalyses?.Any() == true)
+    {
+        <div class="content-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="bi bi-clock-history"></i>
+                    <span>Son Analizler</span>
+                </div>
+            </div>
+            
+            <div class="card-content">
+                <div class="analyses-list">
+                    @foreach (var analysis in recentAnalyses.Take(5))
+                    {
+                        <div class="analysis-item">
+                            <div class="analysis-icon">
+                                <i class="bi bi-git"></i>
+                            </div>
+                            <div class="analysis-info">
+                                <div class="analysis-repo">@analysis.RepoName</div>
+                                <div class="analysis-title">@analysis.Title</div>
+                                <div class="analysis-meta">
+                                    <span class="analysis-pr">#@analysis.PrNumber</span>
+                                </div>
+                            </div>
+                            <div class="analysis-badges">
+                                <div class="quality-badge @GetQualityBadgeClass(analysis.QualityScore)">
+                                    @((int)analysis.QualityScore)
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="bi bi-inbox"></i>
+            </div>
+            <div class="empty-text">Henüz analiz bulunamadı</div>
+            <div class="empty-subtext">İlk analiz için bir PR webhook'u bekleyin</div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private DashboardData? dashboardData;
+    private List<AnalysisItem>? recentAnalyses;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardData();
+    }
+
+    private async Task LoadDashboardData()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var dashboardTask = ApiService.GetDashboardDataAsync();
+            var analysesTask = ApiService.GetRecentAnalysesAsync();
+
+            await Task.WhenAll(dashboardTask, analysesTask);
+
+            dashboardData = await dashboardTask;
+            recentAnalyses = await analysesTask;
+        }
+        catch (Exception ex)
+        {
+            // Log error (could use ILogger here)
+            Console.WriteLine($"Dashboard veri yükleme hatası: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadDashboardData();
+    }
+
+    private string GetQualityBadgeClass(double quality)
+    {
+        return quality switch
+        {
+            >= 80 => "bg-success",
+            >= 60 => "bg-warning",
+            _ => "bg-danger"
+        };
+    }
+
+    private string GetRiskBadgeClass(string risk)
+    {
+        return risk?.ToLower() switch
+        {
+            "low" or "düşük" => "bg-success",
+            "medium" or "orta" => "bg-warning",
+            "high" or "yüksek" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "completed" or "tamamlandı" => "bg-success",
+            "processing" or "işleniyor" => "bg-info",
+            "pending" or "bekliyor" => "bg-warning",
+            "failed" or "başarısız" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetRiskIcon(string risk)
+    {
+        return risk?.ToLower() switch
+        {
+            "low" or "düşük" => "bi bi-check-circle",
+            "medium" or "orta" => "bi bi-exclamation-circle",
+            "high" or "yüksek" => "bi bi-x-circle",
+            _ => "bi bi-question-circle"
+        };
+    }
+}

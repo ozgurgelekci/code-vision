@@ -1,0 +1,33 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+.vs/
+
+## Database
+*.db
+*.db-shm
+*.db-wal
+
+## Development files
+current_*.html
+current_*.css
+.env
+
+## Rider/IntelliJ
+.idea/
+
+## VS Code
+.vscode/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Railway specific
+railway-volume/
+
+## Docker
+docker-compose.override.yml

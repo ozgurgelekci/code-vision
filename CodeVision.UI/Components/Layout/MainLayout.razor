@@ -1,0 +1,60 @@
+﻿@inherits LayoutComponentBase
+
+<div class="app-container">
+    <!-- Sidebar -->
+    <div class="sidebar-container">
+        <NavMenu />
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Top Header -->
+        <header class="top-header">
+            <div class="header-left">
+                <button class="sidebar-toggle d-lg-none" onclick="toggleSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div class="header-title">
+                    <h1 class="page-title">CodeVision</h1>
+                    <span class="page-subtitle">AI Kod İnceleme Asistanı</span>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <div class="header-stats">
+                    <div class="stat-item">
+                        <div class="status-indicator status-online"></div>
+                        <span class="status-text">Online</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <main class="content-area">
+            @Body
+        </main>
+    </div>
+</div>
+
+<!-- Sidebar Overlay for Mobile -->
+<div class="sidebar-overlay d-lg-none" onclick="toggleSidebar()"></div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    <div class="error-container">
+        <i class="bi bi-exclamation-triangle"></i>
+        <span>An unhandled error has occurred.</span>
+        <a href="." class="reload-btn">Reload</a>
+        <button class="dismiss-btn" onclick="document.getElementById('blazor-error-ui').style.display='none'">
+            <i class="bi bi-x"></i>
+        </button>
+    </div>
+</div>
+
+<script>
+    function toggleSidebar() {
+        document.querySelector('.sidebar-container').classList.toggle('sidebar-open');
+        document.querySelector('.sidebar-overlay').classList.toggle('active');
+        document.body.classList.toggle('sidebar-mobile-open');
+    }
+</script>
