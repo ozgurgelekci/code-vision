@@ -2,6 +2,7 @@ namespace CodeVision.Core.Entities;
 
 public class RoslynFinding
 {
+    public string Id { get; set; } = Guid.NewGuid().ToString();
     public string RuleId { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
@@ -11,6 +12,7 @@ public class RoslynFinding
     public int ColumnNumber { get; set; }
     public string CodeSnippet { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
     public string? SuggestedFix { get; set; }
 }
 

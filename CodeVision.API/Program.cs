@@ -3,7 +3,6 @@ using CodeVision.Infrastructure.Data;
 using CodeVision.Core.Interfaces;
 using CodeVision.Infrastructure.Repositories;
 using CodeVision.Infrastructure.Services;
-using CodeVision.Infrastructure.Hubs;
 using CodeVision.Core.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -102,7 +101,6 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IPullRequestAnalysisService, PullRequestAnalysisService>();
 builder.Services.AddScoped<IRoslynAnalyzerService, RoslynAnalyzerService>();
 builder.Services.AddScoped<IGptAnalysisService, GptAnalysisService>();
-builder.Services.AddScoped<INotificationService, NotificationService>();
 
 // Background Services
 builder.Services.AddSingleton<IAnalysisQueue, InMemoryAnalysisQueue>();
@@ -193,6 +191,18 @@ else
 app.UseCors("AllowUI");
 app.UseAuthorization();
 app.MapControllers();
-app.MapHub<AnalysisNotificationHub>("/hubs/analysis");
+
+// API responses should not be cached by intermediaries/clients
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/api"))
+    {
+        context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, proxy-revalidate";
+        context.Response.Headers["Pragma"] = "no-cache";
+        context.Response.Headers["Expires"] = "0";
+        context.Response.Headers["Surrogate-Control"] = "no-store";
+    }
+    await next();
+});
 
 app.Run();

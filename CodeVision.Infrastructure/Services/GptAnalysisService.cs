@@ -67,7 +67,7 @@ public class GptAnalysisService : IGptAnalysisService
             var response = await _chatClient.CompleteChatAsync(prompt);
             var content = response.Value.Content[0].Text;
 
-            return ParseGptSuggestions(content, fileName, "refactor");
+            return ParseGptSuggestions(content, fileName, SuggestionType.Refactor);
         }
         catch (Exception ex)
         {
@@ -89,7 +89,7 @@ public class GptAnalysisService : IGptAnalysisService
             var response = await _chatClient.CompleteChatAsync(prompt);
             var content = response.Value.Content[0].Text;
 
-            return ParseGptSuggestions(content, "mixed", "potential_issue");
+            return ParseGptSuggestions(content, "mixed", SuggestionType.PotentialIssue);
         }
         catch (Exception ex)
         {
@@ -111,7 +111,7 @@ public class GptAnalysisService : IGptAnalysisService
             var response = await _chatClient.CompleteChatAsync(prompt);
             var content = response.Value.Content[0].Text;
 
-            return ParseGptSuggestions(content, "security", "security");
+            return ParseGptSuggestions(content, "security", SuggestionType.Security);
         }
         catch (Exception ex)
         {
@@ -238,7 +238,7 @@ JSON formatında yanıt ver:
 }}";
     }
 
-    private List<GptSuggestion> ParseGptSuggestions(string? content, string defaultFileName, string defaultType)
+    private List<GptSuggestion> ParseGptSuggestions(string? content, string defaultFileName, SuggestionType defaultType)
     {
         var suggestions = new List<GptSuggestion>();
 
@@ -264,7 +264,7 @@ JSON formatında yanıt ver:
                 {
                     suggestions.AddRange(result.Suggestions.Select(s => new GptSuggestion
                     {
-                        Type = s.Type ?? defaultType,
+                        Type = ParseSuggestionType(s.Type) ?? defaultType,
                         Title = s.Title ?? "GPT Önerisi",
                         Description = s.Description ?? "Açıklama bulunamadı",
                         FilePath = defaultFileName,
@@ -346,6 +346,23 @@ JSON formatında yanıt ver:
             return content;
             
         return content[..maxLength] + "\n... (içerik kısaltıldı)";
+    }
+
+    private static SuggestionType? ParseSuggestionType(string? typeStr)
+    {
+        if (string.IsNullOrEmpty(typeStr))
+            return null;
+
+        return typeStr.ToLowerInvariant() switch
+        {
+            "potential_issue" => SuggestionType.PotentialIssue,
+            "refactor" => SuggestionType.Refactor,
+            "performance" => SuggestionType.Performance,
+            "security" => SuggestionType.Security,
+            "code_quality" => SuggestionType.CodeQuality,
+            "best_practice" => SuggestionType.BestPractice,
+            _ => null
+        };
     }
 
     // JSON Deserialization için yardımcı sınıflar

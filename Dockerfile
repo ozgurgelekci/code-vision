@@ -23,8 +23,8 @@ COPY . .
 
 # Build and publish
 WORKDIR "/src"
-RUN dotnet build "CodeVision.sln" -c Release --no-restore
-RUN dotnet publish "CodeVision.API/CodeVision.API.csproj" -c Release -o /app/publish --no-restore
+RUN dotnet build "CodeVision.sln" -c Release
+RUN dotnet publish "CodeVision.API/CodeVision.API.csproj" -c Release -o /app/publish
 
 # Final stage
 FROM base AS final

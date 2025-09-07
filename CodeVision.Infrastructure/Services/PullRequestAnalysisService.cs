@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using CodeVision.Core.Entities;
 using CodeVision.Core.Interfaces;
 using CodeVision.Infrastructure.Data;
+using System.Text.Json;
 
 namespace CodeVision.Infrastructure.Services;
 
@@ -55,6 +56,11 @@ public class PullRequestAnalysisService : IPullRequestAnalysisService
         return await _context.PullRequestAnalyses
             .Include(a => a.Notifications)
             .FirstOrDefaultAsync(a => a.Id == id);
+    }
+
+    public async Task<PullRequestAnalysis?> GetAnalysisByIdAsync(string id)
+    {
+        return await GetAnalysisAsync(id);
     }
 
     public async Task<PullRequestAnalysis?> GetAnalysisByPrAsync(string repoName, int prNumber)
@@ -137,5 +143,55 @@ public class PullRequestAnalysisService : IPullRequestAnalysisService
             ["medium_risk"] = await _context.PullRequestAnalyses.CountAsync(a => a.RiskLevel == RiskLevel.Medium),
             ["low_risk"] = await _context.PullRequestAnalyses.CountAsync(a => a.RiskLevel == RiskLevel.Low)
         };
+    }
+
+    public async Task<List<RoslynFinding>?> GetRoslynFindingsAsync(string analysisId)
+    {
+        try
+        {
+            var analysis = await _context.PullRequestAnalyses
+                .FirstOrDefaultAsync(a => a.Id == analysisId);
+            
+            if (analysis == null || string.IsNullOrEmpty(analysis.RoslynFindings))
+                return new List<RoslynFinding>();
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = true
+            };
+            
+            return JsonSerializer.Deserialize<List<RoslynFinding>>(analysis.RoslynFindings, options) 
+                   ?? new List<RoslynFinding>();
+        }
+        catch (Exception)
+        {
+            return new List<RoslynFinding>();
+        }
+    }
+
+    public async Task<List<GptSuggestion>?> GetGptSuggestionsAsync(string analysisId)
+    {
+        try
+        {
+            var analysis = await _context.PullRequestAnalyses
+                .FirstOrDefaultAsync(a => a.Id == analysisId);
+            
+            if (analysis == null || string.IsNullOrEmpty(analysis.GptSuggestions))
+                return new List<GptSuggestion>();
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = true
+            };
+            
+            return JsonSerializer.Deserialize<List<GptSuggestion>>(analysis.GptSuggestions, options) 
+                   ?? new List<GptSuggestion>();
+        }
+        catch (Exception)
+        {
+            return new List<GptSuggestion>();
+        }
     }
 }

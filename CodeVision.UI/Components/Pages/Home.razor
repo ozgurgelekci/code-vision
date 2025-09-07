@@ -2,6 +2,7 @@
 @using CodeVision.UI.Services
 @inject IApiService ApiService
 @rendermode InteractiveServer
+@implements IAsyncDisposable
 
 <PageTitle>CodeVision - AI Code Analysis Dashboard</PageTitle>
 
@@ -155,6 +156,284 @@
     .analysis-card.low-risk {
         border-left: 4px solid #10b981 !important;
     }
+
+    /* Detail Button */
+    .detail-button {
+        background: #3b82f6 !important;
+        color: white !important;
+        border: none !important;
+        padding: 8px 16px !important;
+        border-radius: 8px !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .detail-button:hover {
+        background: #2563eb !important;
+        transform: translateY(-1px) !important;
+    }
+
+    .analysis-footer {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        margin-top: 16px !important;
+        padding-top: 16px !important;
+        border-top: 1px solid #e2e8f0 !important;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        background: rgba(0, 0, 0, 0.7) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 1000 !important;
+        opacity: 1 !important;
+        transition: opacity 0.2s ease !important;
+    }
+
+    .modal-content {
+        background: white !important;
+        border-radius: 16px !important;
+        width: 90% !important;
+        max-width: 800px !important;
+        max-height: 90vh !important;
+        overflow: hidden !important;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25) !important;
+        transform: scale(1) !important;
+        transition: transform 0.3s ease !important;
+    }
+
+    .modal-header {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 24px !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        background: #f8fafc !important;
+    }
+
+    .modal-title {
+        font-size: 20px !important;
+        font-weight: 700 !important;
+        color: #1a202c !important;
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    .modal-close {
+        background: none !important;
+        border: none !important;
+        font-size: 18px !important;
+        cursor: pointer !important;
+        color: #64748b !important;
+        padding: 8px !important;
+        border-radius: 8px !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .modal-close:hover {
+        background: #e2e8f0 !important;
+        color: #1a202c !important;
+    }
+
+    .modal-body {
+        padding: 24px !important;
+        max-height: calc(90vh - 180px) !important;
+        overflow-y: auto !important;
+    }
+
+    .modal-footer {
+        padding: 24px !important;
+        border-top: 1px solid #e2e8f0 !important;
+        display: flex !important;
+        justify-content: flex-end !important;
+        background: #f8fafc !important;
+    }
+
+    .detail-section {
+        margin-bottom: 32px !important;
+    }
+
+    .detail-section:last-child {
+        margin-bottom: 0 !important;
+    }
+
+    .detail-header {
+        margin-bottom: 16px !important;
+    }
+
+    .detail-header h4 {
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        color: #1a202c !important;
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    .detail-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 16px !important;
+    }
+
+    .detail-item {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 4px !important;
+    }
+
+    .detail-label {
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        color: #64748b !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+    }
+
+    .detail-value {
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        color: #1a202c !important;
+    }
+
+    .summary-content {
+        background: #f8fafc !important;
+        padding: 16px !important;
+        border-radius: 8px !important;
+        border: 1px solid #e2e8f0 !important;
+        font-size: 14px !important;
+        line-height: 1.6 !important;
+        color: #374151 !important;
+    }
+
+    .suggestion-item, .finding-item {
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        padding: 16px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .suggestion-header, .finding-header {
+        display: flex !important;
+        gap: 8px !important;
+        margin-bottom: 8px !important;
+        align-items: center !important;
+        flex-wrap: wrap !important;
+    }
+
+    .suggestion-type, .finding-rule, .finding-severity, .finding-category, .suggestion-priority, .impact-score {
+        padding: 4px 8px !important;
+        border-radius: 4px !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+    }
+
+    .suggestion-type {
+        background: #dbeafe !important;
+        color: #1e40af !important;
+    }
+
+    .suggestion-priority.priority-high, .finding-severity.severity-error {
+        background: #fecaca !important;
+        color: #dc2626 !important;
+    }
+
+    .suggestion-priority.priority-medium, .finding-severity.severity-warning {
+        background: #fde68a !important;
+        color: #d97706 !important;
+    }
+
+    .suggestion-priority.priority-low, .finding-severity.severity-info {
+        background: #d1fae5 !important;
+        color: #059669 !important;
+    }
+
+    .impact-score {
+        background: #f3e8ff !important;
+        color: #7c3aed !important;
+    }
+
+    .suggestion-title {
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        color: #1a202c !important;
+        margin: 8px 0 !important;
+    }
+
+    .suggestion-description, .finding-message {
+        font-size: 14px !important;
+        line-height: 1.6 !important;
+        color: #374151 !important;
+        margin-bottom: 8px !important;
+    }
+
+    .suggested-code pre {
+        background: #1f2937 !important;
+        color: #f9fafb !important;
+        padding: 12px !important;
+        border-radius: 6px !important;
+        font-size: 13px !important;
+        overflow-x: auto !important;
+        margin: 8px 0 !important;
+    }
+
+    .suggestion-tags, .finding-location {
+        display: flex !important;
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+        margin-top: 8px !important;
+        align-items: center !important;
+    }
+
+    .tag {
+        background: #e2e8f0 !important;
+        color: #64748b !important;
+        padding: 2px 8px !important;
+        border-radius: 12px !important;
+        font-size: 12px !important;
+        font-weight: 500 !important;
+    }
+
+    .finding-location {
+        font-size: 12px !important;
+        color: #64748b !important;
+    }
+
+    .secondary-button {
+        background: #f1f5f9 !important;
+        color: #374151 !important;
+        border: 1px solid #d1d5db !important;
+        padding: 12px 24px !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .secondary-button:hover {
+        background: #e2e8f0 !important;
+        border-color: #9ca3af !important;
+    }
+
+    /* Smooth modal transitions */
 
     /* Hide old layout completely */
     .page, .sidebar, .top-row, .navbar, .nav-scrollable, .content {
@@ -316,6 +595,10 @@
                                 <i class="bi bi-clock"></i>
                                 @GetTimeAgo(analysis.ProcessedAt)
                             </div>
+                            <button class="detail-button" @onclick="() => ShowAnalysisDetail(analysis.Id)">
+                                <i class="bi bi-eye"></i>
+                                Details
+                            </button>
                         </div>
                     </div>
                 }
@@ -342,13 +625,164 @@
     </div>
 </div>
 
+<!-- Analysis Detail Modal -->
+@if (showDetailModal && selectedAnalysis != null)
+{
+    <div class="modal-overlay" @onclick="CloseDetailModal">
+        <div class="modal-content" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="bi bi-file-earmark-code"></i>
+                    Analysis Details - PR #@selectedAnalysis.PrNumber
+                </h3>
+                <button class="modal-close" @onclick="CloseDetailModal">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Basic Info -->
+                <div class="detail-section">
+                    <div class="detail-header">
+                        <h4><i class="bi bi-info-circle"></i> Basic Information</h4>
+                    </div>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Repository:</span>
+                            <span class="detail-value">@selectedAnalysis.RepoName</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">PR Title:</span>
+                            <span class="detail-value">@selectedAnalysis.PrTitle</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Author:</span>
+                            <span class="detail-value">@selectedAnalysis.PrAuthor</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Quality Score:</span>
+                            <span class="detail-value quality-@GetQualityClass(selectedAnalysis.QualityScore)">
+                                @selectedAnalysis.QualityScore/100
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Risk Level:</span>
+                            <span class="detail-value risk-@GetRiskClass(selectedAnalysis.RiskLevel)">
+                                <i class="@GetRiskIcon(selectedAnalysis.RiskLevel)"></i>
+                                @selectedAnalysis.RiskLevel
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Processed:</span>
+                            <span class="detail-value">@selectedAnalysis.ProcessedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                @if (!string.IsNullOrEmpty(selectedAnalysis.Summary))
+                {
+                    <div class="detail-section">
+                        <div class="detail-header">
+                            <h4><i class="bi bi-card-text"></i> Analysis Summary</h4>
+                        </div>
+                        <div class="summary-content">
+                            @selectedAnalysis.Summary
+                        </div>
+                    </div>
+                }
+
+                <!-- GPT Suggestions -->
+                @if (selectedAnalysis.GptSuggestions?.Any() == true)
+                {
+                    <div class="detail-section">
+                        <div class="detail-header">
+                            <h4><i class="bi bi-robot"></i> AI Suggestions (@selectedAnalysis.GptSuggestions.Count)</h4>
+                        </div>
+                        <div class="suggestions-list">
+                            @foreach (var suggestion in selectedAnalysis.GptSuggestions)
+                            {
+                                <div class="suggestion-item">
+                                    <div class="suggestion-header">
+                                        <span class="suggestion-type @suggestion.Type.ToLower()">@suggestion.Type</span>
+                                        <span class="suggestion-priority priority-@suggestion.Priority.ToLower()">@suggestion.Priority</span>
+                                        <span class="impact-score">Impact: @suggestion.ImpactScore/10</span>
+                                    </div>
+                                    <h5 class="suggestion-title">@suggestion.Title</h5>
+                                    <p class="suggestion-description">@suggestion.Description</p>
+                                    @if (!string.IsNullOrEmpty(suggestion.SuggestedCode))
+                                    {
+                                        <div class="suggested-code">
+                                            <strong>Suggested Code:</strong>
+                                            <pre><code>@suggestion.SuggestedCode</code></pre>
+                                        </div>
+                                    }
+                                    @if (suggestion.Tags?.Any() == true)
+                                    {
+                                        <div class="suggestion-tags">
+                                            @foreach (var tag in suggestion.Tags)
+                                            {
+                                                <span class="tag">@tag</span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Roslyn Findings -->
+                @if (selectedAnalysis.RoslynFindings?.Any() == true)
+                {
+                    <div class="detail-section">
+                        <div class="detail-header">
+                            <h4><i class="bi bi-bug"></i> Static Analysis Findings (@selectedAnalysis.RoslynFindings.Count)</h4>
+                        </div>
+                        <div class="findings-list">
+                            @foreach (var finding in selectedAnalysis.RoslynFindings)
+                            {
+                                <div class="finding-item">
+                                    <div class="finding-header">
+                                        <span class="finding-rule">@finding.RuleId</span>
+                                        <span class="finding-severity severity-@finding.Severity.ToLower()">@finding.Severity</span>
+                                        <span class="finding-category">@finding.Category</span>
+                                    </div>
+                                    <p class="finding-message">@finding.Message</p>
+                                    <div class="finding-location">
+                                        <i class="bi bi-file-code"></i>
+                                        @finding.FilePath:@finding.LineNumber
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+            
+            <div class="modal-footer">
+                <button class="secondary-button" @onclick="CloseDetailModal">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private bool isLoading = true;
     private DashboardData? dashboardData;
+    private bool showDetailModal = false;
+    private AnalysisDetail? selectedAnalysis = null;
+    private bool loadingDetail = false;
+    private CancellationTokenSource? autoRefreshCts;
+    private Task? autoRefreshTask;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadDashboardData();
+        autoRefreshCts = new CancellationTokenSource();
+        autoRefreshTask = RunAutoRefreshAsync(autoRefreshCts.Token);
     }
 
     private async Task LoadDashboardData()
@@ -374,6 +808,29 @@
     private async Task RefreshData()
     {
         await LoadDashboardData();
+    }
+
+    private async Task RunAutoRefreshAsync(CancellationToken token)
+    {
+        var timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(token))
+            {
+                if (!showDetailModal && !loadingDetail)
+                {
+                    await InvokeAsync(LoadDashboardData);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // ignored
+        }
+        finally
+        {
+            timer.Dispose();
+        }
     }
 
     private string GetQualityCardClass()
@@ -488,5 +945,67 @@
             >= 1/(24.0 * 60) => $"{(int)timeSpan.TotalMinutes} minute(s) ago",
             _ => "Just now"
         };
+    }
+
+    private async Task ShowAnalysisDetail(string analysisId)
+    {
+        Console.WriteLine($"🚀 DETAILS BUTONU TIKLANDI: {analysisId}");
+        
+        if (loadingDetail) 
+        {
+            Console.WriteLine("⏳ ZATEN YÜKLENİYOR, ÇIKIŞ YAPILIYOR");
+            return;
+        }
+        
+        try
+        {
+            Console.WriteLine($"🔄 LOADING BAŞLATILIYOR...");
+            loadingDetail = true;
+            selectedAnalysis = await ApiService.GetAnalysisDetailAsync(analysisId);
+            Console.WriteLine($"📦 API SONUCU: {selectedAnalysis?.Id}");
+            
+            if (selectedAnalysis != null)
+            {
+                Console.WriteLine($"✅ MODAL AÇILIYOR: showDetailModal = true");
+                showDetailModal = true;
+                StateHasChanged();
+                Console.WriteLine($"🔄 StateHasChanged ÇAĞIRILDI");
+            }
+            else
+            {
+                Console.WriteLine($"❌ selectedAnalysis NULL, MODAL AÇILMAYACAK");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"💥 HATA: {ex.Message}");
+        }
+        finally
+        {
+            loadingDetail = false;
+            Console.WriteLine($"🏁 LOADING TAMAMLANDI");
+        }
+    }
+
+    private void CloseDetailModal()
+    {
+        showDetailModal = false;
+        selectedAnalysis = null;
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (autoRefreshCts != null)
+        {
+            autoRefreshCts.Cancel();
+            autoRefreshCts.Dispose();
+            autoRefreshCts = null;
+        }
+
+        if (autoRefreshTask != null)
+        {
+            try { await autoRefreshTask; } catch (OperationCanceledException) { }
+        }
     }
 }

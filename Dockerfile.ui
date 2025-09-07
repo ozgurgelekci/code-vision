@@ -23,7 +23,10 @@ COPY . .
 
 # Build and publish UI
 WORKDIR "/src/CodeVision.UI"
-RUN dotnet publish "CodeVision.UI.csproj" -c Release -o /app/publish --no-restore
+RUN dotnet tool install -g Microsoft.Web.LibraryManager.Cli
+ENV PATH="$PATH:/root/.dotnet/tools"
+RUN libman restore
+RUN dotnet publish "CodeVision.UI.csproj" -c Release -o /app/publish
 
 # Final stage
 FROM base AS final

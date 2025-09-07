@@ -6,9 +6,9 @@ public class AnalysisNotification
     public string PullRequestAnalysisId { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
     public NotificationType Type { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public bool IsRead { get; set; }
-    
+    public bool IsRead { get; set; } = false;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
     // Navigation property
     public virtual PullRequestAnalysis PullRequestAnalysis { get; set; } = null!;
 }
@@ -16,8 +16,7 @@ public class AnalysisNotification
 public enum NotificationType
 {
     AnalysisStarted = 0,
-    AnalysisInProgress = 1,
-    AnalysisCompleted = 2,
-    AnalysisFailed = 3,
-    HighRiskDetected = 4
+    AnalysisCompleted = 1,
+    AnalysisFailed = 2,
+    HighRiskDetected = 3
 }

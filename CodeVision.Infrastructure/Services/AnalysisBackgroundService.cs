@@ -64,7 +64,7 @@ public class AnalysisBackgroundService : BackgroundService
             var analysisService = scope.ServiceProvider.GetRequiredService<IPullRequestAnalysisService>();
             var roslynService = scope.ServiceProvider.GetRequiredService<IRoslynAnalyzerService>();
             var gptService = scope.ServiceProvider.GetRequiredService<IGptAnalysisService>();
-            var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+            // var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
             
             // Analiz kaydını al
             var analysis = await analysisService.GetAnalysisAsync(job.AnalysisId);
@@ -79,7 +79,7 @@ public class AnalysisBackgroundService : BackgroundService
             await analysisService.UpdateAnalysisAsync(analysis);
             
             // Başlangıç bildirimi gönder
-            await notificationService.SendAnalysisStartedAsync(analysis.Id);
+            // await notificationService.SendAnalysisStartedAsync(analysis.Id);
 
             // Mock diff content kullan (GitHub service yok)
             string diffContent = CreateMockDiffContent(job);
@@ -111,13 +111,13 @@ public class AnalysisBackgroundService : BackgroundService
             await _queue.CompleteJobAsync(job.Id);
 
             // Tamamlanma bildirimi gönder
-            await notificationService.SendAnalysisCompletedAsync(analysis.Id, analysis.QualityScore, analysis.RiskLevel);
+            // await notificationService.SendAnalysisCompletedAsync(analysis.Id, analysis.QualityScore, analysis.RiskLevel);
 
             // Yüksek risk kontrolü
             if (analysis.RiskLevel == RiskLevel.High)
             {
                 var criticalFindings = roslynFindings.Where(f => f.Severity == Severity.Error).ToList();
-                await notificationService.SendHighRiskDetectedAsync(analysis.Id, criticalFindings);
+                // await notificationService.SendHighRiskDetectedAsync(analysis.Id, criticalFindings);
             }
 
             _logger.LogInformation("PR analizi tamamlandı: {JobId} - Score: {Score}, Risk: {Risk}",
@@ -132,13 +132,13 @@ public class AnalysisBackgroundService : BackgroundService
             try
             {
                 var analysisService = scope.ServiceProvider.GetRequiredService<IPullRequestAnalysisService>();
-                var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+                // var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
                 var analysis = await analysisService.GetAnalysisAsync(job.AnalysisId);
                 if (analysis != null)
                 {
                     analysis.Status = AnalysisStatus.Failed;
                     await analysisService.UpdateAnalysisAsync(analysis);
-                    await notificationService.SendAnalysisFailedAsync(analysis.Id, ex.Message);
+                    // await notificationService.SendAnalysisFailedAsync(analysis.Id, ex.Message);
                 }
             }
             catch (Exception updateEx)

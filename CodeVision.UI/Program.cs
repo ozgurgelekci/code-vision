@@ -3,11 +3,8 @@ using CodeVision.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// AllowedHosts konfigürasyonu - Development için disable et
-if (builder.Environment.IsDevelopment())
-{
-    builder.Configuration["AllowedHosts"] = "*";
-}
+// AllowedHosts konfigürasyonu - Docker için disable et
+builder.Configuration["AllowedHosts"] = "*";
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -24,11 +21,12 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+    // app.UseHsts(); // Docker HTTP için devre dışı
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Docker HTTP için devre dışı
 
+app.UseStaticFiles();
 
 app.UseAntiforgery();
 
