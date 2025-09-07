@@ -81,8 +81,8 @@ public class AnalysisBackgroundService : BackgroundService
             // Send started notification
             // await notificationService.SendAnalysisStartedAsync(analysis.Id);
 
-            // Use mock diff content (no GitHub service)
-            string diffContent = CreateMockDiffContent(job);
+            // No mock diff content; integrate real diff provider in the future
+            string diffContent = string.Empty;
 
             // Run Roslyn analysis
             var roslynFindings = await roslynService.AnalyzePullRequestDiffAsync(diffContent);
@@ -145,120 +145,6 @@ public class AnalysisBackgroundService : BackgroundService
             {
                 _logger.LogError(updateEx, "Error while updating analysis status: {JobId}", job.Id);
             }
-        }
-    }
-
-    private static string CreateMockDiffContent(AnalysisJob job)
-    {
-        var title = (job.PrTitle ?? string.Empty).ToLowerInvariant();
-        var profile = "medium";
-
-        if (title.Contains("quality:excellent")) profile = "excellent";
-        else if (title.Contains("quality:good")) profile = "good";
-        else if (title.Contains("quality:low")) profile = "low";
-        else if (title.Contains("risk:high") || title.Contains("quality:high")) profile = "high";
-        else if (title.Contains("quality:medium")) profile = "medium";
-
-        string DiffHeader(string file) => $@"diff --git a/src/{file} b/src/{file}\nindex 0000000..1111111 100644\n--- a/src/{file}\n+++ b/src/{file}\n@@ -1,10 +1,60 @@\n using System;";
-
-        switch (profile)
-        {
-            case "excellent":
-                return $@"{DiffHeader("Excellent.cs")}
-// PR: {job.PrTitle} by {job.PrAuthor}
-namespace Demo
-{{
-    public class Sample
-    {{
-        private const int DefaultBatchSize = 50;
-        public int Add(int a, int b)
-        {{
-            return a + b;
-        }}
-    }}
-}}";
-
-            case "good":
-                return $@"{DiffHeader("Good.cs")}
-// PR: {job.PrTitle} by {job.PrAuthor}
-namespace Demo
-{{
-    public class Sample
-    {{
-        // magic number to trigger info finding
-        private readonly int timeoutMs = 30000;
-        public async void DoWork() // async void to trigger warning
-        {{
-            await Task.Delay(10);
-            Console.WriteLine(""Working {job.PrNumber}"");
-        }}
-    }}
-}}";
-
-            case "medium":
-                return $@"{DiffHeader("Medium.cs")}
-// PR: {job.PrTitle} by {job.PrAuthor}
-namespace Demo
-{{
-    public class Sample
-    {{
-        public void Broken()
-        {{
-            Console.WriteLine(""missing semicolon"")
-        }}
-    }}
-}}";
-
-            case "low":
-                return $@"{DiffHeader("Low.cs")}
-// PR: {job.PrTitle} by {job.PrAuthor}
-namespace Demo
-{{
-    public class Sample
-    {{
-        public void Broken1()
-        {{
-            Console.WriteLine(""e1"")
-            var x = y + 1; // y undefined
-        }}
-        public void Broken2()
-        {{
-            Console.Writeline(""typo""); // method typo
-        }}
-    }}
-}}";
-
-            case "high":
-                return $@"{DiffHeader("High.cs")}
-// PR: {job.PrTitle} by {job.PrAuthor}
-namespace Demo
-{{
-    public class Sample
-    {{
-        public async void DoWork()
-        {{
-            await Task.Delay(10);
-            Console.WriteLine(missing);
-            if (true)
-            {{
-                Console.WriteLine(""unbalanced braces"");
-        }}
-    }}
-}}";
-
-            default:
-                return $@"{DiffHeader("Default.cs")}
-// PR: {job.PrTitle} by {job.PrAuthor}
-namespace Demo
-{{
-    public class Sample
-    {{
-        public void Process()
-        {{
-            Console.WriteLine(""Processing..."");
-        }}
-    }}
-}}";
         }
     }
 }
