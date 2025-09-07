@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using CodeVision.UI.Services
+@using System.Linq
 @inject IApiService ApiService
 @inject NavigationManager NavigationManager
 @inject Microsoft.JSInterop.IJSRuntime JS
@@ -952,10 +953,25 @@
                 var repo = pr?.Repo ?? string.Empty;
                 var number = pr?.PrNumber ?? 0;
                 var title = pr?.Title ?? string.Empty;
+                var analysisId = pr?.AnalysisId ?? string.Empty;
+                
                 ShowToast(
                     title: "Pull Request Closed",
                     message: $"{repo} · #{number}\n{title} — Deleted from database",
                     variant: "warning");
+                
+                // Remove from local list immediately for instant UI update
+                if (dashboardData?.RecentAnalyses != null && !string.IsNullOrEmpty(analysisId))
+                {
+                    var analysisToRemove = dashboardData.RecentAnalyses
+                        .FirstOrDefault(a => a.Id == analysisId);
+                    if (analysisToRemove != null)
+                    {
+                        dashboardData.RecentAnalyses.Remove(analysisToRemove);
+                    }
+                }
+                
+                // Also refresh from server to ensure consistency
                 await LoadDashboardData();
                 await InvokeAsync(StateHasChanged);
             });
