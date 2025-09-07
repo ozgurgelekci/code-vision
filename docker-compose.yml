@@ -26,6 +26,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       # Railway style DATABASE_URL
       DATABASE_URL: postgresql://postgres:postgres@db:5432/codevision
+      DATABASE_SSLMODE: Disable
       UI_ORIGINS: http://localhost:3001,https://localhost:3001
     ports:
       - "8080:8080"
