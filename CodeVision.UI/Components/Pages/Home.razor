@@ -632,13 +632,6 @@
         </div>
     </div>
 
-    <!-- Test Button -->
-    <div class="mb-4 text-center">
-        <button class="btn btn-warning btn-lg" @onclick="TestAPI">
-            <i class="bi bi-broadcast"></i> 🧪 TEST API ENDPOINT 🧪
-        </button>
-    </div>
-
     <!-- Stats Cards -->
     <div class="stats-grid">
         @if (isLoading)
@@ -1011,75 +1004,6 @@
         await LoadDashboardData();
     }
     
-    private System.Timers.Timer? pollingTimer;
-    private int lastAnalysisCount = 0;
-    
-    private void StartPolling()
-    {
-        pollingTimer = new System.Timers.Timer(5000); // 5 saniye
-        pollingTimer.Elapsed += async (sender, e) =>
-        {
-            try
-            {
-                var newData = await ApiService.GetDashboardDataAsync();
-                if (newData?.RecentAnalyses?.Count != lastAnalysisCount)
-                {
-                    await JS.InvokeVoidAsync("console.log", $"🔄 Data changed: {lastAnalysisCount} → {newData?.RecentAnalyses?.Count}");
-                    
-                    if (newData?.RecentAnalyses?.Count > lastAnalysisCount)
-                    {
-                        ShowToast("New Analysis", "New PR analysis completed!", "info");
-                        await PlayNotificationSoundAsync();
-                    }
-                    
-                    dashboardData = newData;
-                    lastAnalysisCount = newData?.RecentAnalyses?.Count ?? 0;
-                    await InvokeAsync(StateHasChanged);
-                }
-            }
-            catch (Exception ex)
-            {
-                await JS.InvokeVoidAsync("console.error", $"❌ Polling error: {ex.Message}");
-            }
-        };
-        pollingTimer.Start();
-        lastAnalysisCount = dashboardData?.RecentAnalyses?.Count ?? 0;
-        JS.InvokeVoidAsync("console.log", "🔄 Polling started - checking every 5 seconds");
-    }
-    
-    private async Task TestAPI()
-    {
-        try
-        {
-            await JS.InvokeVoidAsync("console.log", "🧪 Testing API endpoint...");
-            
-            // JavaScript ile API çağrısı yap
-            await JS.InvokeVoidAsync("eval", @"
-                fetch('/webhook/test-pr-closed', { method: 'POST' })
-                    .then(r => r.json())
-                    .then(data => {
-                        console.log('🔴 API Response:', data);
-                        // Toast göster
-                        window.showToast = window.showToast || function(title, message) {
-                            console.log('Toast:', title, message);
-                        };
-                    })
-                    .catch(err => console.error('❌ API Error:', err));
-            ");
-            
-            // Toast göster
-            ShowToast("API Test", "Test PR closed event sent!", "info");
-            
-            // 2 saniye sonra refresh yap
-            await Task.Delay(2000);
-            await RefreshData();
-        }
-        catch (Exception ex)
-        {
-            await JS.InvokeVoidAsync("console.error", $"❌ API Test Error: {ex.Message}");
-            ShowToast("API Test Error", ex.Message, "danger");
-        }
-    }
 
     private async Task InitializeSignalRAsync()
     {
@@ -1394,13 +1318,6 @@
             toastTimer.Stop();
             toastTimer.Dispose();
             toastTimer = null;
-        }
-        
-        if (pollingTimer != null)
-        {
-            pollingTimer.Stop();
-            pollingTimer.Dispose();
-            pollingTimer = null;
         }
     }
 
