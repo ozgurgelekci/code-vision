@@ -958,7 +958,7 @@
         try
         {
             isLoading = true;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
             dashboardData = await ApiService.GetDashboardDataAsync();
         }
         catch (Exception ex)
@@ -968,7 +968,7 @@
         finally
         {
             isLoading = false;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 
