@@ -40,7 +40,7 @@ services:
     depends_on:
       - api
     environment:
-      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_ENVIRONMENT: Development
       ApiSettings__BaseUrl: http://api:8080
     ports:
       - "3001:8080"

@@ -1053,13 +1053,19 @@
         {
             await JS.InvokeVoidAsync("console.log", "🧪 Testing API endpoint...");
             
-            // Test endpoint'ini çağır
-            using var httpClient = new HttpClient();
-            httpClient.BaseAddress = new Uri("http://localhost:8080");
-            var response = await httpClient.PostAsync("/webhook/test-pr-closed", null);
-            var result = await response.Content.ReadAsStringAsync();
-            
-            await JS.InvokeVoidAsync("console.log", $"🔴 API Response: {result}");
+            // JavaScript ile API çağrısı yap
+            await JS.InvokeVoidAsync("eval", @"
+                fetch('/webhook/test-pr-closed', { method: 'POST' })
+                    .then(r => r.json())
+                    .then(data => {
+                        console.log('🔴 API Response:', data);
+                        // Toast göster
+                        window.showToast = window.showToast || function(title, message) {
+                            console.log('Toast:', title, message);
+                        };
+                    })
+                    .catch(err => console.error('❌ API Error:', err));
+            ");
             
             // Toast göster
             ShowToast("API Test", "Test PR closed event sent!", "info");
