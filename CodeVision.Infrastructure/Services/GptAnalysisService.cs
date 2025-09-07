@@ -23,7 +23,7 @@ public class GptAnalysisService : IGptAnalysisService
         
         if (string.IsNullOrEmpty(apiKey))
         {
-            _logger.LogWarning("OpenAI API key yapılandırılmamış");
+            _logger.LogWarning("OpenAI API key is not configured");
             _chatClient = null!;
         }
         else
@@ -36,8 +36,8 @@ public class GptAnalysisService : IGptAnalysisService
     {
         if (_chatClient == null)
         {
-            _logger.LogWarning("OpenAI client yapılandırılmamış, varsayılan özet döndürülüyor");
-            return $"PR Başlığı: {prTitle}\nÖzet: OpenAI entegrasyonu henüz yapılandırılmamış.";
+            _logger.LogWarning("OpenAI client is not configured, returning default summary");
+            return $"PR Title: {prTitle}\nSummary: OpenAI integration is not configured.";
         }
 
         try
@@ -45,12 +45,12 @@ public class GptAnalysisService : IGptAnalysisService
             var prompt = CreateSummaryPrompt(diffContent, prTitle);
             var response = await _chatClient.CompleteChatAsync(prompt);
             
-            return response.Value.Content[0].Text ?? "Özet oluşturulamadı.";
+            return response.Value.Content[0].Text ?? "Summary could not be generated.";
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "GPT özet oluşturma hatası");
-            return $"PR Başlığı: {prTitle}\nÖzet: Otomatik analiz sırasında hata oluştu.";
+            _logger.LogError(ex, "GPT summary generation error");
+            return $"PR Title: {prTitle}\nSummary: An error occurred during automated analysis.";
         }
     }
 
@@ -71,7 +71,7 @@ public class GptAnalysisService : IGptAnalysisService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "GPT refactör önerileri oluşturma hatası: {FileName}", fileName);
+            _logger.LogError(ex, "GPT refactor suggestions generation error: {FileName}", fileName);
             return new List<GptSuggestion>();
         }
     }
@@ -93,7 +93,7 @@ public class GptAnalysisService : IGptAnalysisService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "GPT potansiyel sorunlar analizi hatası");
+            _logger.LogError(ex, "GPT potential issues analysis error");
             return new List<GptSuggestion>();
         }
     }
@@ -115,7 +115,7 @@ public class GptAnalysisService : IGptAnalysisService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "GPT güvenlik analizi hatası");
+            _logger.LogError(ex, "GPT security analysis error");
             return new List<GptSuggestion>();
         }
     }
@@ -143,45 +143,44 @@ public class GptAnalysisService : IGptAnalysisService
 
     private string CreateSummaryPrompt(string diffContent, string prTitle)
     {
-        return $@"Aşağıdaki kod değişikliklerini analiz et. Öncelikle 2-3 cümlede ne değiştiğini özetle. 
-Sonra ""potansiyel hatalar"", ""geliştirme/refaktör önerileri"" bölümlerini kısa şekilde açıkla.
+        return $@"Analyze the code changes below. First, summarize what changed in 2–3 sentences.
+Then provide the following sections with concise, actionable items:
 
-PR Başlığı: {prTitle}
+PR Title: {prTitle}
 
-Kod Değişiklikleri:
+Diff:
 {TruncateContent(diffContent, 4000)}
 
-Lütfen yanıtını İngilizce olarak ver ve sonucu şu formatta organize et:
-## <b>Özet</b> <hr>
-[2-3 cümlelik özet]
+Respond in English. Structure the result using HTML headings and lists:
+<h4>Summary</h4>
+- 2–3 sentence summary
 
-## <b>Potansiyel Hatalar</b> <hr>
-[Varsa potansiyel hataları listele]
+<h4>Potential Issues</h4>
+- Numbered list of potential bugs or risks (if any)
 
-## <b>Geliştirme Önerileri</b> <hr>
-[Kod kalitesi ve refaktör önerileri]";
+<h4>Improvement Suggestions</h4>
+- Numbered list of refactor or quality improvements";
     }
 
     private string CreateRefactorPrompt(string codeSnippet, string fileName)
     {
-        return $@"Bu metot veya sınıfın kodunu daha okunabilir, test edilebilir ve performanslı hale getirecek 
-detaylı adımlar ve değişiklikleri sırala. Her öneri için kısa bir kod örneği ver. 
-Ayrıca olası riskleri (geri uyumluluk, behavior change) belirt.
+        return $@"List concrete steps to make this method or class more readable, testable, and performant.
+Provide a short code example for each suggestion. Also note any risks (e.g., behavior change or compatibility).
 
-Dosya: {fileName}
-Kod:
+File: {fileName}
+Code:
 {TruncateContent(codeSnippet, 2000)}
 
-Yanıtını JSON formatında ver:
+Return JSON with the following schema:
 {{
     ""suggestions"": [
         {{
             ""type"": ""refactor"",
-            ""title"": ""Öneri başlığı"",
-            ""description"": ""Detaylı açıklama"",
+            ""title"": ""Suggestion title"",
+            ""description"": ""Detailed explanation"",
             ""priority"": ""Low|Medium|High|Critical"",
             ""category"": ""code_quality|performance|maintainability"",
-            ""suggestedCode"": ""Örnek kod"",
+            ""suggestedCode"": ""Example code"",
             ""impactScore"": ""1-10"",
             ""tags"": [""tag1"", ""tag2""]
         }}
@@ -191,19 +190,19 @@ Yanıtını JSON formatında ver:
 
     private string CreateIssueAnalysisPrompt(string diffContent)
     {
-        return $@"Bu kod parçasında potansiyel hataları, performans sorunlarını ve kod kalitesi 
-problemlerini tespit et. Her bulgu için öncelik seviyesi ve çözüm önerisi ver.
+        return $@"Identify potential bugs, performance problems, and code quality issues in the following diff.
+For each finding, provide a priority and a clear remediation suggestion.
 
-Kod:
+Code:
 {TruncateContent(diffContent, 3000)}
 
-JSON formatında yanıt ver:
+Return JSON with this schema:
 {{
     ""suggestions"": [
         {{
             ""type"": ""potential_issue"",
-            ""title"": ""Sorun başlığı"",
-            ""description"": ""Detaylı açıklama"",
+            ""title"": ""Issue title"",
+            ""description"": ""Detailed explanation"",
             ""priority"": ""Low|Medium|High|Critical"",
             ""category"": ""code_quality|performance|security|maintainability"",
             ""impactScore"": ""1-10"",
@@ -215,20 +214,19 @@ JSON formatında yanıt ver:
 
     private string CreateSecurityAnalysisPrompt(string codeSnippet)
     {
-        return $@"Bu kod parçasında güvenlik açıklarını, concurrency sorunlarını, async/await yanlış kullanımlarını 
-ve exception handling problemlerini tespit et. Olası yarış durumları, deadlock riskleri 
-veya yanlış exception kullanımı var mı kontrol et.
+        return $@"Find security vulnerabilities, concurrency hazards, and async/await or exception-handling issues.
+Call out any race conditions, deadlock risks, or misuse of exceptions.
 
-Kod:
+Code:
 {TruncateContent(codeSnippet, 2000)}
 
-JSON formatında yanıt ver:
+Return JSON with this schema:
 {{
     ""suggestions"": [
         {{
             ""type"": ""security"",
-            ""title"": ""Güvenlik sorunu başlığı"",
-            ""description"": ""Detaylı açıklama ve çözüm"",
+            ""title"": ""Security issue title"",
+            ""description"": ""Detailed explanation and fix"",
             ""priority"": ""Low|Medium|High|Critical"",
             ""category"": ""security"",
             ""impactScore"": ""1-10"",
@@ -265,8 +263,8 @@ JSON formatında yanıt ver:
                     suggestions.AddRange(result.Suggestions.Select(s => new GptSuggestion
                     {
                         Type = ParseSuggestionType(s.Type) ?? defaultType,
-                        Title = s.Title ?? "GPT Önerisi",
-                        Description = s.Description ?? "Açıklama bulunamadı",
+                        Title = s.Title ?? "GPT Suggestion",
+                        Description = s.Description ?? "No description",
                         FilePath = defaultFileName,
                         Priority = ParsePriority(s.Priority),
                         Category = s.Category ?? "code_quality",
@@ -278,11 +276,11 @@ JSON formatında yanıt ver:
             }
             else
             {
-                // JSON formatı bulunamadı, metin olarak bir öneri oluştur
+                // JSON not found, create a single text suggestion
                 suggestions.Add(new GptSuggestion
                 {
                     Type = defaultType,
-                    Title = "GPT Analizi",
+                    Title = "GPT Analysis",
                     Description = TruncateContent(content, 500),
                     FilePath = defaultFileName,
                     Priority = Priority.Medium,
@@ -294,12 +292,12 @@ JSON formatında yanıt ver:
         }
         catch (JsonException ex)
         {
-            _logger.LogWarning(ex, "GPT yanıtı JSON parse edilemedi, fallback kullanılıyor");
+            _logger.LogWarning(ex, "GPT response could not be parsed, using fallback");
             
             suggestions.Add(new GptSuggestion
             {
                 Type = defaultType,
-                Title = "GPT Analizi (Parse Hatası)",
+                Title = "GPT Analysis (Parse Error)",
                 Description = TruncateContent(content, 500),
                 FilePath = defaultFileName,
                 Priority = Priority.Low,
@@ -345,7 +343,7 @@ JSON formatında yanıt ver:
         if (content.Length <= maxLength)
             return content;
             
-        return content[..maxLength] + "\n... (içerik kısaltıldı)";
+        return content[..maxLength] + "\n... (content truncated)";
     }
 
     private static SuggestionType? ParseSuggestionType(string? typeStr)
