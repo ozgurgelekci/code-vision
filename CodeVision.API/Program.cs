@@ -114,7 +114,13 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowUI", policy =>
     {
-        policy.WithOrigins("http://localhost:3001", "https://localhost:3001")
+        var origins = new List<string> { "http://localhost:3001", "https://localhost:3001" };
+        var uiOriginsEnv = Environment.GetEnvironmentVariable("UI_ORIGINS");
+        if (!string.IsNullOrWhiteSpace(uiOriginsEnv))
+        {
+            origins.AddRange(uiOriginsEnv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+        }
+        policy.WithOrigins(origins.ToArray())
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();

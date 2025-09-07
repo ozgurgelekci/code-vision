@@ -880,7 +880,22 @@
     {
         try
         {
-            var hubUrl = NavigationManager.ToAbsoluteUri("/hubs/analysis").ToString();
+            var baseUrl = (await JS.InvokeAsync<string>("eval", "(window.__apiBaseUrl||'')"))
+                          ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                // Fallback: ApiService HttpClient BaseAddress
+                try
+                {
+                    var cfgBase = typeof(IApiService).Assembly
+                        .GetType("CodeVision.UI.Services.ApiService")
+                        ?.GetProperty("BaseAddress", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                }
+                catch { }
+            }
+            var hubUrl = (string.IsNullOrWhiteSpace(baseUrl) ? 
+                NavigationManager.ToAbsoluteUri("/hubs/analysis").ToString() :
+                new Uri(new Uri(baseUrl.TrimEnd('/')), "/hubs/analysis").ToString());
             hubConnection = new HubConnectionBuilder()
                 .WithUrl(hubUrl)
                 .WithAutomaticReconnect()
