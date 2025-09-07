@@ -81,7 +81,7 @@ public class AnalysisBackgroundService : BackgroundService
             // Send started notification
             // await notificationService.SendAnalysisStartedAsync(analysis.Id);
 
-            // No mock diff content; integrate real diff provider in the future
+            // No mock diff content; real provider should supply diff content in future
             string diffContent = string.Empty;
 
             // Run Roslyn analysis
