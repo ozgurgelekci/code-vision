@@ -1,6 +1,8 @@
 ﻿@page "/"
 @using CodeVision.UI.Services
 @inject IApiService ApiService
+@inject NavigationManager NavigationManager
+@inject Microsoft.JSInterop.IJSRuntime JS
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR.Client
 @implements IAsyncDisposable
@@ -813,9 +815,9 @@
     {
         try
         {
-            var baseUrl = NavigationManager.BaseUri.TrimEnd('/');
+            var hubUrl = NavigationManager.ToAbsoluteUri("/hubs/analysis").ToString();
             hubConnection = new HubConnectionBuilder()
-                .WithUrl($"{baseUrl}/hubs/analysis")
+                .WithUrl(hubUrl)
                 .WithAutomaticReconnect()
                 .Build();
 
@@ -848,8 +850,7 @@
     {
         try
         {
-            var js = (IJSRuntime)Context.Services.GetService(typeof(IJSRuntime))!;
-            await js.InvokeVoidAsync("CodeVision.playChime");
+            await JS.InvokeVoidAsync("CodeVision.playChime");
         }
         catch { }
     }
