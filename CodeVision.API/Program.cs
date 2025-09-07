@@ -51,7 +51,9 @@ if (!string.IsNullOrEmpty(connectionString) &&
         // Railway PostgreSQL - convert DATABASE_URL to Npgsql format
         var uri = new Uri(connectionString);
         var userInfo = uri.UserInfo.Split(':');
-        var npgsqlConnectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.LocalPath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+        var sslModeEnv = Environment.GetEnvironmentVariable("DATABASE_SSLMODE");
+        var sslMode = string.IsNullOrWhiteSpace(sslModeEnv) ? "Require" : sslModeEnv;
+        var npgsqlConnectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.LocalPath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode={sslMode};Trust Server Certificate=true";
         
         builder.Services.AddDbContext<CodeVisionDbContext>(options =>
             options.UseNpgsql(npgsqlConnectionString));
@@ -142,30 +144,9 @@ using (var scope = app.Services.CreateScope())
         var dbContext = scope.ServiceProvider.GetRequiredService<CodeVisionDbContext>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         
-        logger.LogInformation("🔄 Starting database migration...");
-        
-        // Ensure database exists and apply migrations
-        logger.LogInformation("🔍 Checking database and migrations...");
-        
-        // Create database if it doesn't exist  
-        await dbContext.Database.EnsureCreatedAsync();
-        
-        // Apply all pending migrations
-        var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
-        
-        if (pendingMigrations.Any())
-        {
-            logger.LogInformation("⏳ Applying {Count} pending migrations: {Migrations}", 
-                pendingMigrations.Count(), string.Join(", ", pendingMigrations));
-            
-            await dbContext.Database.MigrateAsync();
-            
-            logger.LogInformation("✅ Database migration completed successfully!");
-        }
-        else
-        {
-            logger.LogInformation("✅ Database is up to date, no migrations needed.");
-        }
+        logger.LogInformation("🔄 Running database migrations (no EnsureCreated)...");
+        await dbContext.Database.MigrateAsync();
+        logger.LogInformation("✅ Database migration completed or already up to date.");
     }
     catch (Exception ex)
     {
