@@ -1050,15 +1050,23 @@
                 var number = pr?.PrNumber ?? 0;
                 var title = pr?.Title ?? string.Empty;
                 var author = pr?.Author ?? string.Empty;
+                
+                Console.WriteLine($"🟢 NewPullRequest event received: {repo} #{number}");
+                
                 ShowToast(
                     title: "New Pull Request",
                     message: $"{repo} · #{number}\n{title} — {author}",
                     variant: "info");
                 await PlayNotificationSoundAsync();
                 
+                // Wait a bit for the PR to be saved to database
+                await Task.Delay(1000);
+                
                 // Refresh dashboard to show new PR in the list
+                Console.WriteLine("🟢 Refreshing dashboard for new PR");
                 await LoadDashboardData();
                 await InvokeAsync(StateHasChanged);
+                Console.WriteLine("🟢 Dashboard refreshed for new PR");
             });
 
             hubConnection.On<PrClosedNotification>("PullRequestClosed", async pr =>
@@ -1327,5 +1335,36 @@
         toastTimer?.Stop();
         toastTimer?.Dispose();
         toastTimer = null;
+    }
+
+    private async Task LoadDashboardData()
+    {
+        try
+        {
+            Console.WriteLine("🔄 Loading dashboard data...");
+            isLoading = true;
+            dashboardData = await ApiService.GetDashboardDataAsync();
+            Console.WriteLine($"✅ Dashboard data loaded: {dashboardData?.RecentAnalyses?.Count ?? 0} analyses");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error loading dashboard data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadDashboardData();
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardData();
+        await InitializeSignalRAsync();
     }
 }
