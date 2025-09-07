@@ -618,7 +618,7 @@
             </div>
             <div class="d-flex gap-2">
                 <button class="btn btn-outline-secondary" @onclick="TestSignalR">
-                    <i class="bi bi-broadcast"></i> Test SignalR
+                    <i class="bi bi-broadcast"></i> Test API
                 </button>
                 <button class="refresh-button @(isLoading ? "loading" : "")" @onclick="RefreshData" disabled="@isLoading">
                     @if (isLoading)
@@ -979,16 +979,8 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadDashboardData();
-        await InitializeSignalRAsync();
-        
-        // API erişim testi
-        await JS.InvokeVoidAsync("eval", @"
-            console.log('🌐 Testing API access...');
-            fetch('http://localhost:8080/api/health')
-                .then(r => r.json())
-                .then(data => console.log('✅ API accessible:', data))
-                .catch(err => console.error('❌ API not accessible:', err));
-        ");
+        // SignalR yerine polling başlat
+        StartPolling();
     }
 
     private async Task LoadDashboardData()
@@ -1017,9 +1009,45 @@
         await LoadDashboardData();
     }
     
+    private System.Timers.Timer? pollingTimer;
+    private int lastAnalysisCount = 0;
+    
+    private void StartPolling()
+    {
+        pollingTimer = new System.Timers.Timer(5000); // 5 saniye
+        pollingTimer.Elapsed += async (sender, e) =>
+        {
+            try
+            {
+                var newData = await ApiService.GetDashboardDataAsync();
+                if (newData?.RecentAnalyses?.Count != lastAnalysisCount)
+                {
+                    await JS.InvokeVoidAsync("console.log", $"🔄 Data changed: {lastAnalysisCount} → {newData?.RecentAnalyses?.Count}");
+                    
+                    if (newData?.RecentAnalyses?.Count > lastAnalysisCount)
+                    {
+                        ShowToast("New Analysis", "New PR analysis completed!", "info");
+                        await PlayNotificationSoundAsync();
+                    }
+                    
+                    dashboardData = newData;
+                    lastAnalysisCount = newData?.RecentAnalyses?.Count ?? 0;
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+            catch (Exception ex)
+            {
+                await JS.InvokeVoidAsync("console.error", $"❌ Polling error: {ex.Message}");
+            }
+        };
+        pollingTimer.Start();
+        lastAnalysisCount = dashboardData?.RecentAnalyses?.Count ?? 0;
+        JS.InvokeVoidAsync("console.log", "🔄 Polling started - checking every 5 seconds");
+    }
+    
     private async Task TestSignalR()
     {
-        await JS.InvokeVoidAsync("console.log", "🧪 Testing SignalR...");
+        await JS.InvokeVoidAsync("console.log", "🧪 Testing API endpoint...");
         
         // JavaScript ile fetch yap
         await JS.InvokeVoidAsync("eval", @"
@@ -1343,6 +1371,13 @@
             toastTimer.Stop();
             toastTimer.Dispose();
             toastTimer = null;
+        }
+        
+        if (pollingTimer != null)
+        {
+            pollingTimer.Stop();
+            pollingTimer.Dispose();
+            pollingTimer = null;
         }
     }
 
