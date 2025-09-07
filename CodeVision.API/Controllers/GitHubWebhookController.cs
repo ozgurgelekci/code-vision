@@ -45,11 +45,17 @@ public class GitHubWebhookController : ControllerBase
 
             if (ShouldProcessPullRequest(webhookPayload.Action))
             {
+                _logger.LogInformation("Processing PR action: {Action}", webhookPayload.Action);
                 await ProcessPullRequestAsync(webhookPayload);
             }
             else if (webhookPayload.Action == "closed")
             {
+                _logger.LogInformation("Processing PR closed action: {Action}", webhookPayload.Action);
                 await HandlePullRequestClosedAsync(webhookPayload);
+            }
+            else
+            {
+                _logger.LogInformation("Ignoring PR action: {Action}", webhookPayload.Action);
             }
 
             return Ok(new { message = "Webhook processed", action = webhookPayload.Action });
@@ -109,18 +115,23 @@ public class GitHubWebhookController : ControllerBase
                 payload.Repository.FullName, payload.PullRequest.Number);
 
             // Find existing analysis by repo and PR number
+            _logger.LogInformation("Searching for analysis: Repo={Repo}, PR={Number}", 
+                payload.Repository.FullName, payload.PullRequest.Number);
+            
             var existingAnalysis = await _analysisService.GetAnalysisByPrAsync(
                 payload.Repository.FullName, 
                 payload.PullRequest.Number);
 
             if (existingAnalysis != null)
             {
+                _logger.LogInformation("Found analysis to delete: {AnalysisId}", existingAnalysis.Id);
                 var deleted = await _analysisService.DeleteAnalysisAsync(existingAnalysis.Id);
                 if (deleted)
                 {
                     _logger.LogInformation("Analysis deleted successfully: {AnalysisId}", existingAnalysis.Id);
                     
                     // Broadcast PR deletion to connected clients
+                    _logger.LogInformation("Broadcasting PullRequestClosed event for analysis: {AnalysisId}", existingAnalysis.Id);
                     await _hubContext.Clients.All.SendAsync("PullRequestClosed", new
                     {
                         repo = payload.Repository.FullName,
@@ -128,6 +139,7 @@ public class GitHubWebhookController : ControllerBase
                         title = payload.PullRequest.Title,
                         analysisId = existingAnalysis.Id
                     });
+                    _logger.LogInformation("PullRequestClosed event broadcasted successfully");
                 }
                 else
                 {
@@ -136,7 +148,7 @@ public class GitHubWebhookController : ControllerBase
             }
             else
             {
-                _logger.LogInformation("No analysis found for closed PR: {Repo} PR #{Number}",
+                _logger.LogWarning("No analysis found for closed PR: {Repo} PR #{Number}",
                     payload.Repository.FullName, payload.PullRequest.Number);
             }
         }

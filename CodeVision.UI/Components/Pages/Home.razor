@@ -954,15 +954,21 @@
 
             hubConnection.On<PrClosedNotification>("PullRequestClosed", async pr =>
             {
+                Console.WriteLine($"🔴 PullRequestClosed event received: {pr?.Repo} #{pr?.PrNumber}");
+                
                 var repo = pr?.Repo ?? string.Empty;
                 var number = pr?.PrNumber ?? 0;
                 var title = pr?.Title ?? string.Empty;
                 var analysisId = pr?.AnalysisId ?? string.Empty;
                 
+                Console.WriteLine($"🔴 Processing PR closed: Repo={repo}, Number={number}, AnalysisId={analysisId}");
+                
                 ShowToast(
                     title: "Pull Request Closed",
                     message: $"{repo} · #{number}\n{title} — Deleted from database",
                     variant: "warning");
+                
+                Console.WriteLine($"🔴 Toast shown for closed PR");
                 
                 // Remove from local list immediately for instant UI update
                 if (dashboardData?.RecentAnalyses != null && !string.IsNullOrEmpty(analysisId))
@@ -971,13 +977,24 @@
                         .FirstOrDefault(a => a.Id == analysisId);
                     if (analysisToRemove != null)
                     {
+                        Console.WriteLine($"🔴 Removing analysis from local list: {analysisId}");
                         dashboardData.RecentAnalyses.Remove(analysisToRemove);
                     }
+                    else
+                    {
+                        Console.WriteLine($"🔴 Analysis not found in local list: {analysisId}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"🔴 Dashboard data or analysis ID is null/empty");
                 }
                 
                 // Also refresh from server to ensure consistency
+                Console.WriteLine($"🔴 Refreshing dashboard data");
                 await LoadDashboardData();
                 await InvokeAsync(StateHasChanged);
+                Console.WriteLine($"🔴 PR closed processing completed");
             });
 
             await hubConnection.StartAsync();
