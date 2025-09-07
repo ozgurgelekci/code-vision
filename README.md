@@ -9,6 +9,7 @@ GitHub PR'larını otomatik analiz eden; Roslyn ve (opsiyonel) GPT ile özet/ön
 - GPT destekli özet ve öneriler (opsiyonel, anahtar yoksa devre dışı)
 - Arka plan işleyici (queue + worker)
 - Blazor Server UI (10 sn'de bir otomatik yenileme, no-cache)
+ - Blazor Server UI (SignalR ile gerçek zamanlı; toast + sesli uyarı)
 - Kalite skoru (0-100)
 
 > Not: SignalR gerçek zamanlı bildirimler şu an devre dışı. UI periyodik olarak yeniler.
@@ -68,7 +69,7 @@ cd CodeVision.UI && dotnet run
 }
 ```
 
-UI, API adresini `ApiSettings__BaseUrl` ile alır (örn. Railway API URL'si).
+UI, API adresini `ApiSettings__BaseUrl` ile alır (örn. Railway API URL'si). Detay özeti (Summary) HTML render edilir; backend sanitize eder.
 
 ## 📊 API Endpoints (Güncel)
 - `POST /webhook/github`
@@ -76,6 +77,7 @@ UI, API adresini `ApiSettings__BaseUrl` ile alır (örn. Railway API URL'si).
 - `GET /api/analyses`
 - `GET /api/analyses/{id}`
 - `GET /health`
+ - SignalR Hub: `/hubs/analysis` (NewPullRequest, AnalysisUpdated, AnalysisCompleted)
 
 ## 🎯 Skor & Risk
 - Roslyn: %60 (Error -10, Warning -5, Info -1)

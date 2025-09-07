@@ -3,6 +3,8 @@ using System.Text.Json;
 using CodeVision.API.Models;
 using CodeVision.Core.Interfaces;
 using CodeVision.Core.Models;
+using Microsoft.AspNetCore.SignalR;
+using CodeVision.API.Hubs;
 
 namespace CodeVision.API.Controllers;
 
@@ -13,15 +15,18 @@ public class GitHubWebhookController : ControllerBase
     private readonly ILogger<GitHubWebhookController> _logger;
     private readonly IPullRequestAnalysisService _analysisService;
     private readonly IAnalysisQueue _analysisQueue;
+    private readonly IHubContext<AnalysisNotificationHub> _hubContext;
     
     public GitHubWebhookController(
         ILogger<GitHubWebhookController> logger, 
         IPullRequestAnalysisService analysisService,
-        IAnalysisQueue analysisQueue)
+        IAnalysisQueue analysisQueue,
+        IHubContext<AnalysisNotificationHub> hubContext)
     {
         _logger = logger;
         _analysisService = analysisService;
         _analysisQueue = analysisQueue;
+        _hubContext = hubContext;
     }
 
     [HttpPost("github")]
@@ -76,6 +81,14 @@ public class GitHubWebhookController : ControllerBase
             };
 
             await _analysisQueue.EnqueueAsync(job);
+            // Broadcast new PR detected
+            await _hubContext.Clients.All.SendAsync("NewPullRequest", new
+            {
+                repo = payload.Repository.FullName,
+                prNumber = payload.PullRequest.Number,
+                title = payload.PullRequest.Title,
+                author = payload.PullRequest.User.Login
+            });
             _logger.LogInformation("Analysis job queued: {JobId}", job.Id);
         }
         catch (Exception ex)
