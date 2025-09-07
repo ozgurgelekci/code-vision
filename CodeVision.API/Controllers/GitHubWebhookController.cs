@@ -29,6 +29,31 @@ public class GitHubWebhookController : ControllerBase
         _hubContext = hubContext;
     }
 
+    [HttpPost("test-pr-closed")]
+    public async Task<IActionResult> TestPrClosed()
+    {
+        _logger.LogInformation("Manual PR closed test triggered");
+        
+        try
+        {
+            await _hubContext.Clients.All.SendAsync("PullRequestClosed", new
+            {
+                repo = "ozgurgelekci/code-vision",
+                prNumber = 999,
+                title = "Test PR Closed",
+                analysisId = "test-analysis-id"
+            });
+            
+            _logger.LogInformation("Test PullRequestClosed event sent successfully");
+            return Ok(new { message = "Test PR closed event sent" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending test PR closed event");
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
     [HttpPost("github")]
     public async Task<IActionResult> HandleGitHubWebhook([FromBody] JsonElement payload)
     {
