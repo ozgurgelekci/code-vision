@@ -690,7 +690,7 @@
                             <h4><i class="bi bi-card-text"></i> Analysis Summary</h4>
                         </div>
                         <div class="summary-content">
-                            @selectedAnalysis.Summary
+                            @((Microsoft.AspNetCore.Components.MarkupString)selectedAnalysis.Summary)
                         </div>
                     </div>
                 }

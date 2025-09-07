@@ -9,6 +9,7 @@ public class AnalysesController : ControllerBase
 {
     private readonly IPullRequestAnalysisService _analysisService;
     private readonly ILogger<AnalysesController> _logger;
+    private readonly Ganss.XSS.HtmlSanitizer _sanitizer = new();
 
     public AnalysesController(
         IPullRequestAnalysisService analysisService,
@@ -72,7 +73,7 @@ public class AnalysesController : ControllerBase
                 status = analysis.Status.ToString(),
                 qualityScore = analysis.QualityScore,
                 riskLevel = analysis.RiskLevel.ToString(),
-                summary = analysis.Summary,
+                summary = _sanitizer.Sanitize(analysis.Summary ?? string.Empty),
                 processedAt = analysis.ProcessedAt,
                 createdAt = analysis.CreatedAt,
                 roslynFindings = roslynFindings?.Select(f => (object)new
