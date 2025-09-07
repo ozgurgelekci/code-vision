@@ -617,9 +617,6 @@
                 <p class="dashboard-subtitle">AI-Powered Code Quality & Security Analysis</p>
             </div>
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-secondary" @onclick="TestAPI">
-                    <i class="bi bi-broadcast"></i> Test API
-                </button>
                 <button class="refresh-button @(isLoading ? "loading" : "")" @onclick="RefreshData" disabled="@isLoading">
                     @if (isLoading)
                     {
@@ -633,6 +630,13 @@
                 </button>
             </div>
         </div>
+    </div>
+
+    <!-- Test Button -->
+    <div class="mb-4 text-center">
+        <button class="btn btn-warning btn-lg" @onclick="TestAPI">
+            <i class="bi bi-broadcast"></i> 🧪 TEST API ENDPOINT 🧪
+        </button>
     </div>
 
     <!-- Stats Cards -->
