@@ -1020,7 +1020,8 @@
                 }
                 catch { }
             }
-            var hubUrl = "http://api:8080/hubs/analysis"; // Docker internal network
+            // Browser'dan SignalR'a erişim için localhost kullan
+            var hubUrl = "http://localhost:8080/hubs/analysis";
             await JS.InvokeVoidAsync("console.log", $"🔗 SignalR Hub URL: {hubUrl}");
             hubConnection = new HubConnectionBuilder()
                 .WithUrl(hubUrl)
