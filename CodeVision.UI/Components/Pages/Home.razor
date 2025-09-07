@@ -1208,7 +1208,7 @@
             {
                 Console.WriteLine($"✅ MODAL AÇILIYOR: showDetailModal = true");
                 showDetailModal = true;
-                StateHasChanged();
+                await InvokeAsync(StateHasChanged);
                 Console.WriteLine($"🔄 StateHasChanged ÇAĞIRILDI");
             }
             else
@@ -1231,7 +1231,7 @@
     {
         showDetailModal = false;
         selectedAnalysis = null;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
     public async ValueTask DisposeAsync()
