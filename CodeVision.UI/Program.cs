@@ -3,8 +3,22 @@ using CodeVision.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// AllowedHosts konfigürasyonu - Docker için disable et
-builder.Configuration["AllowedHosts"] = "*";
+// Railway/Prod: Kestrel'i dynamic PORT ile dinle
+if (builder.Environment.IsProduction())
+{
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+        options.ListenAnyIP(int.Parse(port));
+        Console.WriteLine($"🚀 Railway UI Kestrel - Listening on ANY IP, PORT: {port}");
+    });
+    builder.Configuration["AllowedHosts"] = "*";
+}
+else
+{
+    // Development: tüm hostlara izin ver
+    builder.Configuration["AllowedHosts"] = "*";
+}
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

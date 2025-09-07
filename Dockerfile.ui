@@ -35,7 +35,5 @@ COPY --from=build /app/publish .
 
 # Railway configuration
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://0.0.0.0:8080
-ENV PORT=8080
 
 ENTRYPOINT ["dotnet", "CodeVision.UI.dll"]
