@@ -159,12 +159,7 @@ public class AnalysisBackgroundService : BackgroundService
         else if (title.Contains("risk:high") || title.Contains("quality:high")) profile = "high";
         else if (title.Contains("quality:medium")) profile = "medium";
 
-        string DiffHeader(string file) => $@"diff --git a/src/{file} b/src/{file}
-index 0000000..1111111 100644
---- a/src/{file}
-+++ b/src/{file}
-@@ -1,10 +1,60 @@
- using System;";
+        string DiffHeader(string file) => $@"diff --git a/src/{file} b/src/{file}\nindex 0000000..1111111 100644\n--- a/src/{file}\n+++ b/src/{file}\n@@ -1,10 +1,60 @@\n using System;";
 
         switch (profile)
         {
@@ -195,7 +190,7 @@ namespace Demo
         public async void DoWork() // async void to trigger warning
         {{
             await Task.Delay(10);
-            Console.WriteLine("Working {job.PrNumber}");
+            Console.WriteLine(""Working {job.PrNumber}"");
         }}
     }}
 }}";
@@ -209,7 +204,7 @@ namespace Demo
     {{
         public void Broken()
         {{
-            Console.WriteLine("missing semicolon")
+            Console.WriteLine(""missing semicolon"")
         }}
     }}
 }}";
@@ -223,12 +218,12 @@ namespace Demo
     {{
         public void Broken1()
         {{
-            Console.WriteLine("e1")
+            Console.WriteLine(""e1"")
             var x = y + 1; // y undefined
         }}
         public void Broken2()
         {{
-            Console.Writeline("typo"); // method typo
+            Console.Writeline(""typo""); // method typo
         }}
     }}
 }}";
@@ -242,11 +237,11 @@ namespace Demo
     {{
         public async void DoWork()
         {{
-            await Task.Delay(10)
+            await Task.Delay(10);
             Console.WriteLine(missing);
-            if (true
+            if (true)
             {{
-                Console.WriteLine("unbalanced braces");
+                Console.WriteLine(""unbalanced braces"");
         }}
     }}
 }}";
@@ -260,7 +255,7 @@ namespace Demo
     {{
         public void Process()
         {{
-            Console.WriteLine("Processing...");
+            Console.WriteLine(""Processing..."");
         }}
     }}
 }}";
