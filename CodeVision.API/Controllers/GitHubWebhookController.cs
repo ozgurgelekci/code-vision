@@ -47,6 +47,10 @@ public class GitHubWebhookController : ControllerBase
             {
                 await ProcessPullRequestAsync(webhookPayload);
             }
+            else if (webhookPayload.Action == "closed")
+            {
+                await HandlePullRequestClosedAsync(webhookPayload);
+            }
 
             return Ok(new { message = "Webhook processed", action = webhookPayload.Action });
         }
@@ -94,6 +98,52 @@ public class GitHubWebhookController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating PR analysis");
+        }
+    }
+
+    private async Task HandlePullRequestClosedAsync(GitHubWebhookPayload payload)
+    {
+        try
+        {
+            _logger.LogInformation("PR closed, deleting analysis: {Repo} PR #{Number}",
+                payload.Repository.FullName, payload.PullRequest.Number);
+
+            // Find existing analysis by repo and PR number
+            var existingAnalysis = await _analysisService.GetAnalysisByPrAsync(
+                payload.Repository.FullName, 
+                payload.PullRequest.Number);
+
+            if (existingAnalysis != null)
+            {
+                var deleted = await _analysisService.DeleteAnalysisAsync(existingAnalysis.Id);
+                if (deleted)
+                {
+                    _logger.LogInformation("Analysis deleted successfully: {AnalysisId}", existingAnalysis.Id);
+                    
+                    // Broadcast PR deletion to connected clients
+                    await _hubContext.Clients.All.SendAsync("PullRequestClosed", new
+                    {
+                        repo = payload.Repository.FullName,
+                        prNumber = payload.PullRequest.Number,
+                        title = payload.PullRequest.Title,
+                        analysisId = existingAnalysis.Id
+                    });
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to delete analysis: {AnalysisId}", existingAnalysis.Id);
+                }
+            }
+            else
+            {
+                _logger.LogInformation("No analysis found for closed PR: {Repo} PR #{Number}",
+                    payload.Repository.FullName, payload.PullRequest.Number);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling PR closure: {Repo} PR #{Number}",
+                payload.Repository.FullName, payload.PullRequest.Number);
         }
     }
 }

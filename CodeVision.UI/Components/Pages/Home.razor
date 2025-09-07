@@ -848,9 +848,17 @@
     private sealed class NewPrNotification
     {
         public string Repo { get; set; } = string.Empty;
-        public int PrNumber { get; set; }
+        public int PrNumber { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string Author { get; set; } = string.Empty;
+    }
+
+    private sealed class PrClosedNotification
+    {
+        public string Repo { get; set; } = string.Empty;
+        public int PrNumber { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string AnalysisId { get; set; } = string.Empty;
     }
 
     protected override async Task OnInitializedAsync()
@@ -937,6 +945,19 @@
                     message: $"{repo} · #{number}\n{title} — {author}",
                     variant: "info");
                 await PlayNotificationSoundAsync();
+            });
+
+            hubConnection.On<PrClosedNotification>("PullRequestClosed", async pr =>
+            {
+                var repo = pr?.Repo ?? string.Empty;
+                var number = pr?.PrNumber ?? 0;
+                var title = pr?.Title ?? string.Empty;
+                ShowToast(
+                    title: "Pull Request Closed",
+                    message: $"{repo} · #{number}\n{title} — Deleted from database",
+                    variant: "warning");
+                await LoadDashboardData();
+                await InvokeAsync(StateHasChanged);
             });
 
             await hubConnection.StartAsync();
