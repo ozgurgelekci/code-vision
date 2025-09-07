@@ -69,14 +69,12 @@ docker-compose up -d
 - **🔧 API**: http://localhost:5001  
 - **📖 API Docs**: http://localhost:5001/swagger
 - **🗄️ PostgreSQL**: localhost:5433
-- **🏪 Redis**: localhost:6379
 
 ### 🛠️ Manuel Kurulum (Development)
 
 #### 1. Gereksinimler
 - .NET 9.0 SDK
 - PostgreSQL 16+
-- Redis (opsiyonel)
 
 #### 2. Veritabanı Hazırlığı
 ```bash

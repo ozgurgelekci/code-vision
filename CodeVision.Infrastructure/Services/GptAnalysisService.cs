@@ -151,14 +151,14 @@ PR Başlığı: {prTitle}
 Kod Değişiklikleri:
 {TruncateContent(diffContent, 4000)}
 
-Lütfen yanıtını Türkçe olarak ver ve sonucu şu formatta organize et:
-## Özet
+Lütfen yanıtını İngilizce olarak ver ve sonucu şu formatta organize et:
+## <b>Özet</b> <hr>
 [2-3 cümlelik özet]
 
-## Potansiyel Hatalar
+## <b>Potansiyel Hatalar</b> <hr>
 [Varsa potansiyel hataları listele]
 
-## Geliştirme Önerileri
+## <b>Geliştirme Önerileri</b> <hr>
 [Kod kalitesi ve refaktör önerileri]";
     }
 

@@ -25,7 +25,7 @@ public class AnalysisBackgroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Analysis Background Service başlatıldı");
+        _logger.LogInformation("Analysis Background Service started");
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -39,17 +39,17 @@ public class AnalysisBackgroundService : BackgroundService
             }
             catch (OperationCanceledException)
             {
-                // Service durduruluyor, normal durum
+                // Service is stopping, normal condition
                 break;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Background service işlem hatası");
+                _logger.LogError(ex, "Background service processing error");
                 await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
             }
         }
 
-        _logger.LogInformation("Analysis Background Service durduruluyor");
+        _logger.LogInformation("Analysis Background Service stopping");
     }
 
     private async Task ProcessAnalysisJobAsync(AnalysisJob job)
@@ -58,7 +58,7 @@ public class AnalysisBackgroundService : BackgroundService
         
         try
         {
-            _logger.LogInformation("PR analizi başlatılıyor: {JobId} - {Repo} #{PrNumber}",
+            _logger.LogInformation("Starting PR analysis: {JobId} - {Repo} #{PrNumber}",
                 job.Id, job.RepoName, job.PrNumber);
 
             var analysisService = scope.ServiceProvider.GetRequiredService<IPullRequestAnalysisService>();
@@ -66,69 +66,69 @@ public class AnalysisBackgroundService : BackgroundService
             var gptService = scope.ServiceProvider.GetRequiredService<IGptAnalysisService>();
             // var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
             
-            // Analiz kaydını al
+            // Get analysis record
             var analysis = await analysisService.GetAnalysisAsync(job.AnalysisId);
             if (analysis == null)
             {
-                await _queue.FailJobAsync(job.Id, "Analiz kaydı bulunamadı");
+                await _queue.FailJobAsync(job.Id, "Analysis record not found");
                 return;
             }
 
-            // Durumu güncelle
+            // Update status
             analysis.Status = AnalysisStatus.InProgress;
             await analysisService.UpdateAnalysisAsync(analysis);
             
-            // Başlangıç bildirimi gönder
+            // Send started notification
             // await notificationService.SendAnalysisStartedAsync(analysis.Id);
 
-            // Mock diff content kullan (GitHub service yok)
+            // Use mock diff content (no GitHub service)
             string diffContent = CreateMockDiffContent(job);
 
-            // Roslyn analizi yap
+            // Run Roslyn analysis
             var roslynFindings = await roslynService.AnalyzePullRequestDiffAsync(diffContent);
             analysis.SetRoslynFindings(roslynFindings);
 
-            // Risk seviyesini belirle
+            // Determine risk level
             analysis.RiskLevel = await roslynService.DetermineRiskLevelAsync(roslynFindings);
 
-            // GPT analizi yap
+            // Run GPT analysis
             var summary = await gptService.GenerateSummaryAsync(diffContent, job.PrTitle);
             analysis.Summary = summary;
 
             var gptSuggestions = await gptService.AnalyzePotentialIssuesAsync(diffContent);
             analysis.SetGptSuggestions(gptSuggestions);
 
-            // Kalite puanını hesapla
+            // Calculate quality score
             var roslynScore = await roslynService.CalculateQualityScoreAsync(roslynFindings);
             var gptScore = await gptService.CalculateGptQualityScoreAsync(gptSuggestions);
-            analysis.QualityScore = (int)((roslynScore * 0.6) + (gptScore * 0.4)); // %60 Roslyn, %40 GPT
+            analysis.QualityScore = (int)((roslynScore * 0.6) + (gptScore * 0.4)); // 60% Roslyn, 40% GPT
 
-            // Analizi tamamla
+            // Complete analysis
             analysis.Status = AnalysisStatus.Completed;
             analysis.ProcessedAt = DateTime.UtcNow;
             
             await analysisService.UpdateAnalysisAsync(analysis);
             await _queue.CompleteJobAsync(job.Id);
 
-            // Tamamlanma bildirimi gönder
+            // Send completed notification
             // await notificationService.SendAnalysisCompletedAsync(analysis.Id, analysis.QualityScore, analysis.RiskLevel);
 
-            // Yüksek risk kontrolü
+            // High risk check
             if (analysis.RiskLevel == RiskLevel.High)
             {
                 var criticalFindings = roslynFindings.Where(f => f.Severity == Severity.Error).ToList();
                 // await notificationService.SendHighRiskDetectedAsync(analysis.Id, criticalFindings);
             }
 
-            _logger.LogInformation("PR analizi tamamlandı: {JobId} - Score: {Score}, Risk: {Risk}",
+            _logger.LogInformation("PR analysis completed: {JobId} - Score: {Score}, Risk: {Risk}",
                 job.Id, analysis.QualityScore, analysis.RiskLevel);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "PR analizi sırasında hata oluştu: {JobId}", job.Id);
+            _logger.LogError(ex, "Error during PR analysis: {JobId}", job.Id);
             await _queue.FailJobAsync(job.Id, ex.Message);
             
-            // Analiz durumunu güncelle ve hata bildirimi gönder
+            // Update analysis status and send failure notification
             try
             {
                 var analysisService = scope.ServiceProvider.GetRequiredService<IPullRequestAnalysisService>();
@@ -143,7 +143,7 @@ public class AnalysisBackgroundService : BackgroundService
             }
             catch (Exception updateEx)
             {
-                _logger.LogError(updateEx, "Analiz durumu güncellenirken hata oluştu: {JobId}", job.Id);
+                _logger.LogError(updateEx, "Error while updating analysis status: {JobId}", job.Id);
             }
         }
     }

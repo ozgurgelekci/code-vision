@@ -58,7 +58,7 @@ public class RoslynAnalyzerService : IRoslynAnalyzerService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Roslyn analizi sırasında hata oluştu: {FileName}", fileName);
+            _logger.LogError(ex, "Error during Roslyn analysis: {FileName}", fileName);
         }
 
         return findings;
@@ -83,7 +83,7 @@ public class RoslynAnalyzerService : IRoslynAnalyzerService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Diff analizi sırasında hata oluştu");
+            _logger.LogError(ex, "Error during diff analysis");
         }
 
         return findings;
@@ -166,7 +166,7 @@ public class RoslynAnalyzerService : IRoslynAnalyzerService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Özel analizler sırasında hata oluştu: {FileName}", fileName);
+            _logger.LogError(ex, "Error during custom analyses: {FileName}", fileName);
         }
     }
 
@@ -184,8 +184,8 @@ public class RoslynAnalyzerService : IRoslynAnalyzerService
             findings.Add(new RoslynFinding
             {
                 RuleId = "CV0001",
-                Title = "Async void kullanımı",
-                Message = "Async void metotlar yerine async Task kullanın",
+                Title = "Async void usage",
+                Message = "Use async Task instead of async void methods",
                 Severity = Severity.Warning,
                 FilePath = fileName,
                 LineNumber = location.StartLinePosition.Line + 1,
@@ -210,7 +210,7 @@ public class RoslynAnalyzerService : IRoslynAnalyzerService
             {
                 RuleId = "CV0002",
                 Title = "Magic number",
-                Message = $"Magic number '{literal.Token.ValueText}' yerine named constant kullanın",
+                Message = $"Use a named constant instead of magic number '{literal.Token.ValueText}'",
                 Severity = Severity.Info,
                 FilePath = fileName,
                 LineNumber = location.StartLinePosition.Line + 1,
