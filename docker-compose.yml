@@ -44,7 +44,10 @@ services:
       ApiSettings__BaseUrl: https://code-vision.up.railway.app
     ports:
       - "3001:8080"
+    volumes:
+      - dp_keys_ui:/root/.aspnet/DataProtection-Keys
 
 volumes:
   db_data:
+  dp_keys_ui:
 
