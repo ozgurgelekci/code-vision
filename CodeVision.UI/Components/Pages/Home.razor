@@ -979,16 +979,17 @@
 
     private async Task LoadDashboardData()
     {
-        isLoading = true;
-        StateHasChanged();
-
         try
         {
+            Console.WriteLine("🔄 Loading dashboard data...");
+            isLoading = true;
+            StateHasChanged();
             dashboardData = await ApiService.GetDashboardDataAsync();
+            Console.WriteLine($"✅ Dashboard data loaded: {dashboardData?.RecentAnalyses?.Count ?? 0} analyses");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Dashboard loading error: {ex.Message}");
+            Console.WriteLine($"❌ Error loading dashboard data: {ex.Message}");
         }
         finally
         {
@@ -1335,36 +1336,5 @@
         toastTimer?.Stop();
         toastTimer?.Dispose();
         toastTimer = null;
-    }
-
-    private async Task LoadDashboardData()
-    {
-        try
-        {
-            Console.WriteLine("🔄 Loading dashboard data...");
-            isLoading = true;
-            dashboardData = await ApiService.GetDashboardDataAsync();
-            Console.WriteLine($"✅ Dashboard data loaded: {dashboardData?.RecentAnalyses?.Count ?? 0} analyses");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Error loading dashboard data: {ex.Message}");
-        }
-        finally
-        {
-            isLoading = false;
-        }
-    }
-
-    private async Task RefreshData()
-    {
-        await LoadDashboardData();
-        StateHasChanged();
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadDashboardData();
-        await InitializeSignalRAsync();
     }
 }
