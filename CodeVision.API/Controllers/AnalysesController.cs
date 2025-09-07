@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using CodeVision.Core.Interfaces;
+using System.Text.RegularExpressions;
 
 namespace CodeVision.API.Controllers;
 
@@ -9,7 +10,6 @@ public class AnalysesController : ControllerBase
 {
     private readonly IPullRequestAnalysisService _analysisService;
     private readonly ILogger<AnalysesController> _logger;
-    private readonly Ganss.XSS.HtmlSanitizer _sanitizer = new();
 
     public AnalysesController(
         IPullRequestAnalysisService analysisService,
@@ -73,7 +73,7 @@ public class AnalysesController : ControllerBase
                 status = analysis.Status.ToString(),
                 qualityScore = analysis.QualityScore,
                 riskLevel = analysis.RiskLevel.ToString(),
-                summary = _sanitizer.Sanitize(analysis.Summary ?? string.Empty),
+                summary = SanitizeSummary(analysis.Summary ?? string.Empty),
                 processedAt = analysis.ProcessedAt,
                 createdAt = analysis.CreatedAt,
                 roslynFindings = roslynFindings?.Select(f => (object)new
@@ -109,5 +109,28 @@ public class AnalysesController : ControllerBase
             _logger.LogError(ex, "Error getting analysis detail: {AnalysisId}", id);
             return StatusCode(500, new { error = "Internal server error" });
         }
+    }
+
+    private static string SanitizeSummary(string html)
+    {
+        if (string.IsNullOrWhiteSpace(html)) return string.Empty;
+
+        // Remove script/style blocks
+        var sanitized = Regex.Replace(html, "(?is)<(script|style)[^>]*>.*?</\\1>", string.Empty);
+
+        // Remove inline event handlers and javascript: href/src
+        sanitized = Regex.Replace(sanitized, @"on\\w+\\s*=\\s*""[^""]*""", string.Empty, RegexOptions.IgnoreCase);
+        sanitized = Regex.Replace(sanitized, @"on\\w+\\s*=\\s*'[^']*'", string.Empty, RegexOptions.IgnoreCase);
+        sanitized = Regex.Replace(sanitized, @"on\\w+\\s*=\\s*[^\s>]+", string.Empty, RegexOptions.IgnoreCase);
+        sanitized = Regex.Replace(sanitized, @"(href|src)\\s*=\\s*['""]?\\s*javascript:[^'"">\s]+['""]?", string.Empty, RegexOptions.IgnoreCase);
+
+        // Keep only allowed tags; strip attributes
+        var allowed = "p|br|strong|b|em|i|u|ul|ol|li|code|pre|h1|h2|h3|h4";
+        // Strip attributes from allowed tags
+        sanitized = Regex.Replace(sanitized, $@"<({allowed})(?:\\s+[^>]*)?>", "<$1>", RegexOptions.IgnoreCase);
+        // Remove any other tags (keep inner text)
+        sanitized = Regex.Replace(sanitized, $@"</?(?!({allowed}))\\w+[^>]*>", string.Empty, RegexOptions.IgnoreCase);
+
+        return sanitized;
     }
 }
