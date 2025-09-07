@@ -981,15 +981,15 @@
     {
         try
         {
-            Console.WriteLine("🔄 Loading dashboard data...");
+            await JS.InvokeVoidAsync("console.log", "🔄 Loading dashboard data...");
             isLoading = true;
             StateHasChanged();
             dashboardData = await ApiService.GetDashboardDataAsync();
-            Console.WriteLine($"✅ Dashboard data loaded: {dashboardData?.RecentAnalyses?.Count ?? 0} analyses");
+            await JS.InvokeVoidAsync("console.log", $"✅ Dashboard data loaded: {dashboardData?.RecentAnalyses?.Count ?? 0} analyses");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Error loading dashboard data: {ex.Message}");
+            await JS.InvokeVoidAsync("console.log", $"❌ Error loading dashboard data: {ex.Message}");
         }
         finally
         {
@@ -1052,7 +1052,7 @@
                 var title = pr?.Title ?? string.Empty;
                 var author = pr?.Author ?? string.Empty;
                 
-                Console.WriteLine($"🟢 NewPullRequest event received: {repo} #{number}");
+                await JS.InvokeVoidAsync("console.log", $"🟢 NewPullRequest event received: {repo} #{number}");
                 
                 ShowToast(
                     title: "New Pull Request",
@@ -1064,30 +1064,30 @@
                 await Task.Delay(1000);
                 
                 // Refresh dashboard to show new PR in the list
-                Console.WriteLine("🟢 Refreshing dashboard for new PR");
+                await JS.InvokeVoidAsync("console.log", "🟢 Refreshing dashboard for new PR");
                 await LoadDashboardData();
                 await InvokeAsync(StateHasChanged);
-                Console.WriteLine("🟢 Dashboard refreshed for new PR");
+                await JS.InvokeVoidAsync("console.log", "🟢 Dashboard refreshed for new PR");
             });
 
             hubConnection.On<PrClosedNotification>("PullRequestClosed", async pr =>
             {
-                Console.WriteLine($"🔴 PullRequestClosed event received: {pr?.Repo} #{pr?.PrNumber}");
+                await JS.InvokeVoidAsync("console.log", $"🔴 PullRequestClosed event received: {pr?.Repo} #{pr?.PrNumber}");
                 
                 var repo = pr?.Repo ?? string.Empty;
                 var number = pr?.PrNumber ?? 0;
                 var title = pr?.Title ?? string.Empty;
                 var analysisId = pr?.AnalysisId ?? string.Empty;
                 
-                Console.WriteLine($"🔴 Processing PR closed: Repo={repo}, Number={number}, AnalysisId={analysisId}");
+                await JS.InvokeVoidAsync("console.log", $"🔴 Processing PR closed: Repo={repo}, Number={number}, AnalysisId={analysisId}");
                 
                 ShowToast(
                     title: "Pull Request Closed",
                     message: $"{repo} · #{number}\n{title} — Deleted from database",
                     variant: "warning");
                 
-                Console.WriteLine($"🔴 Toast shown for closed PR");
-                
+                await JS.InvokeVoidAsync("console.log", $"🔴 Toast shown for closed PR");
+
                 // Remove from local list immediately for instant UI update
                 if (dashboardData?.RecentAnalyses != null && !string.IsNullOrEmpty(analysisId))
                 {
@@ -1095,24 +1095,24 @@
                         .FirstOrDefault(a => a.Id == analysisId);
                     if (analysisToRemove != null)
                     {
-                        Console.WriteLine($"🔴 Removing analysis from local list: {analysisId}");
+                        await JS.InvokeVoidAsync("console.log", $"🔴 Removing analysis from local list: {analysisId}");
                         dashboardData.RecentAnalyses.Remove(analysisToRemove);
                     }
                     else
                     {
-                        Console.WriteLine($"🔴 Analysis not found in local list: {analysisId}");
+                        await JS.InvokeVoidAsync("console.log", $"🔴 Analysis not found in local list: {analysisId}");
                     }
                 }
                 else
                 {
-                    Console.WriteLine($"🔴 Dashboard data or analysis ID is null/empty");
+                    await JS.InvokeVoidAsync("console.log", $"🔴 Dashboard data or analysis ID is null/empty");
                 }
-                
+
                 // Also refresh from server to ensure consistency
-                Console.WriteLine($"🔴 Refreshing dashboard data");
+                await JS.InvokeVoidAsync("console.log", $"🔴 Refreshing dashboard data");
                 await LoadDashboardData();
                 await InvokeAsync(StateHasChanged);
-                Console.WriteLine($"🔴 PR closed processing completed");
+                await JS.InvokeVoidAsync("console.log", $"🔴 PR closed processing completed");
             });
 
             await hubConnection.StartAsync();
