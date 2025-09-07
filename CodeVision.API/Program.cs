@@ -128,6 +128,7 @@ var app = builder.Build();
 Console.WriteLine($"🌐 Environment: {app.Environment.EnvironmentName}");
 Console.WriteLine($"🔗 App URLs: {string.Join(", ", app.Urls)}");
 Console.WriteLine($"📍 ASPNETCORE_URLS: {Environment.GetEnvironmentVariable("ASPNETCORE_URLS")}");
+Console.WriteLine($"🔧 GPT JSON Parse Fix Active: de7d69d");
 
 // Automatic database migration for Railway deployment  
 using (var scope = app.Services.CreateScope())

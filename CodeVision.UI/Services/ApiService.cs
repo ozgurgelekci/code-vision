@@ -5,7 +5,6 @@ namespace CodeVision.UI.Services;
 public interface IApiService
 {
     Task<DashboardData?> GetDashboardDataAsync();
-    Task<List<AnalysisItem>?> GetRecentAnalysesAsync();
 }
 
 public class ApiService : IApiService
@@ -20,7 +19,7 @@ public class ApiService : IApiService
         _configuration = configuration;
         _logger = logger;
         
-        var baseUrl = _configuration["ApiSettings:BaseUrl"] ?? "http://codevision-api";
+        var baseUrl = _configuration["ApiSettings:BaseUrl"] ?? "https://code-vision.up.railway.app";
         _httpClient.BaseAddress = new Uri(baseUrl);
     }
 
@@ -32,65 +31,86 @@ public class ApiService : IApiService
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<DashboardData>(content, new JsonSerializerOptions
+                var options = new JsonSerializerOptions
                 {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                });
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    PropertyNameCaseInsensitive = true
+                };
+                
+                return JsonSerializer.Deserialize<DashboardData>(content, options);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Dashboard verisi alınırken hata oluştu");
+            _logger.LogError(ex, "Dashboard verisi alınırken hata oluştu: {Error}", ex.Message);
         }
         
         // Fallback data
         return new DashboardData
         {
-            TotalAnalyses = 0,
-            AverageQuality = 0,
-            PendingAnalyses = 0,
-            HighRiskCount = 0
+            Overview = new OverviewData
+            {
+                TotalAnalyses = 0,
+                AverageQualityScore = 0,
+                PendingAnalyses = 0
+            },
+            RiskDistribution = new RiskDistribution { High = 0, Medium = 0, Low = 0 },
+            RecentAnalyses = new List<AnalysisItem>(),
+            SystemStatus = new SystemStatus { QueueLength = 0, IsHealthy = true, LastUpdate = DateTime.UtcNow }
         };
     }
 
-    public async Task<List<AnalysisItem>?> GetRecentAnalysesAsync()
-    {
-        try
-        {
-            var response = await _httpClient.GetAsync("/api/dashboard/analyses");
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<List<AnalysisItem>>(content, new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                });
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Son analizler alınırken hata oluştu");
-        }
-
-        return new List<AnalysisItem>();
-    }
 }
 
 public class DashboardData
 {
+    public OverviewData? Overview { get; set; }
+    public RiskDistribution? RiskDistribution { get; set; }
+    public QualityDistribution? QualityDistribution { get; set; }
+    public List<AnalysisItem>? RecentAnalyses { get; set; }
+    public SystemStatus? SystemStatus { get; set; }
+}
+
+public class OverviewData
+{
     public int TotalAnalyses { get; set; }
-    public double AverageQuality { get; set; }
+    public int AverageQualityScore { get; set; }
+    public int HighQualityCount { get; set; }
+    public int MediumQualityCount { get; set; }
+    public int LowQualityCount { get; set; }
     public int PendingAnalyses { get; set; }
-    public int HighRiskCount { get; set; }
+}
+
+public class RiskDistribution
+{
+    public int High { get; set; }
+    public int Medium { get; set; }
+    public int Low { get; set; }
+}
+
+public class QualityDistribution
+{
+    public int Excellent { get; set; }
+    public int Good { get; set; }
+    public int NeedsImprovement { get; set; }
+}
+
+public class SystemStatus
+{
+    public int QueueLength { get; set; }
+    public bool IsHealthy { get; set; }
+    public DateTime LastUpdate { get; set; }
 }
 
 public class AnalysisItem
 {
+    public string Id { get; set; } = string.Empty;
     public string RepoName { get; set; } = string.Empty;
     public int PrNumber { get; set; }
-    public string Title { get; set; } = string.Empty;
-    public double QualityScore { get; set; }
-    public string RiskLevel { get; set; } = string.Empty;
+    public string PrTitle { get; set; } = string.Empty;
+    public string PrAuthor { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
+    public int QualityScore { get; set; }
+    public string RiskLevel { get; set; } = string.Empty;
     public DateTime ProcessedAt { get; set; }
 }

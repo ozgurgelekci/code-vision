@@ -270,7 +270,7 @@ JSON formatında yanıt ver:
                         FilePath = defaultFileName,
                         Priority = ParsePriority(s.Priority),
                         Category = s.Category ?? "code_quality",
-                        ImpactScore = s.ImpactScore ?? 5,
+                        ImpactScore = ParseImpactScore(s.ImpactScore),
                         Tags = s.Tags ?? new List<string>(),
                         SuggestedCode = s.SuggestedCode
                     }));
@@ -324,6 +324,22 @@ JSON formatında yanıt ver:
         };
     }
 
+    private static int ParseImpactScore(string? impactScore)
+    {
+        if (string.IsNullOrEmpty(impactScore))
+            return 5; // Default değer
+
+        // String'den int'e dönüştürmeyi dene
+        if (int.TryParse(impactScore, out int score))
+        {
+            // 1-10 arasında sınırla
+            return Math.Max(1, Math.Min(10, score));
+        }
+
+        // Parse edilemezse default değer
+        return 5;
+    }
+
     private static string TruncateContent(string content, int maxLength)
     {
         if (content.Length <= maxLength)
@@ -346,7 +362,7 @@ JSON formatında yanıt ver:
         public string? Priority { get; set; }
         public string? Category { get; set; }
         public string? SuggestedCode { get; set; }
-        public int? ImpactScore { get; set; }
+        public string? ImpactScore { get; set; } // String olarak al, parse sırasında int'e çevir
         public List<string>? Tags { get; set; }
     }
 }

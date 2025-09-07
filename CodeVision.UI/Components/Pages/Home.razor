@@ -3,166 +3,348 @@
 @inject IApiService ApiService
 @rendermode InteractiveServer
 
-<PageTitle>Dashboard - CodeVision</PageTitle>
+<PageTitle>CodeVision - AI Code Analysis Dashboard</PageTitle>
 
-<div class="dashboard-container">
-    <!-- Page Header -->
-    <div class="page-header">
-        <div class="page-header-content">
-            <div class="page-info">
-                <h1 class="page-title">Dashboard</h1>
-                <p class="page-description">AI destekli kod analizi ve kalite metrikleri</p>
+<style>
+    /* Inline Modern Dashboard Override */
+    .modern-dashboard {
+        padding: 24px !important;
+        max-width: 1400px !important;
+        margin: 0 auto !important;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+        min-height: 100vh !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    }
+
+    .dashboard-header {
+        margin-bottom: 32px !important;
+    }
+
+    .header-content {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        background: white !important;
+        padding: 24px !important;
+        border-radius: 16px !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+
+    .dashboard-title {
+        font-size: 28px !important;
+        font-weight: 700 !important;
+        color: #1a202c !important;
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+    }
+
+    .dashboard-title i {
+        color: #3b82f6 !important;
+        font-size: 32px !important;
+    }
+
+    .dashboard-subtitle {
+        color: #64748b !important;
+        font-size: 16px !important;
+        margin: 8px 0 0 0 !important;
+        font-weight: 400 !important;
+    }
+
+    .refresh-button {
+        background: #3b82f6 !important;
+        color: white !important;
+        border: none !important;
+        padding: 12px 20px !important;
+        border-radius: 12px !important;
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        font-weight: 600 !important;
+    }
+
+    .stats-grid {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+        gap: 20px !important;
+        margin-bottom: 32px !important;
+    }
+
+    .stat-card {
+        background: white !important;
+        border-radius: 16px !important;
+        padding: 24px !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+        transition: transform 0.2s ease !important;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+    }
+
+    .stat-icon {
+        width: 48px !important;
+        height: 48px !important;
+        border-radius: 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 24px !important;
+        margin-bottom: 16px !important;
+        background: linear-gradient(135deg, #ddd6fe, #c4b5fd) !important;
+        color: #7c3aed !important;
+    }
+
+    .stat-number {
+        font-size: 32px !important;
+        font-weight: 800 !important;
+        color: #1a202c !important;
+        margin-bottom: 4px !important;
+    }
+
+    .stat-label {
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        color: #64748b !important;
+        margin-bottom: 8px !important;
+    }
+
+    .stat-description {
+        font-size: 13px !important;
+        color: #94a3b8 !important;
+    }
+
+    .analyses-section {
+        margin-top: 32px !important;
+    }
+
+    .section-title {
+        font-size: 20px !important;
+        font-weight: 700 !important;
+        color: #1a202c !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        margin: 0 0 24px 0 !important;
+    }
+
+    .analyses-grid {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)) !important;
+        gap: 20px !important;
+    }
+
+    .analysis-card {
+        background: white !important;
+        border-radius: 16px !important;
+        padding: 24px !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+        transition: transform 0.2s ease !important;
+    }
+
+    .analysis-card.high-risk {
+        border-left: 4px solid #ef4444 !important;
+    }
+
+    .analysis-card.low-risk {
+        border-left: 4px solid #10b981 !important;
+    }
+
+    /* Hide old layout completely */
+    .page, .sidebar, .top-row, .navbar, .nav-scrollable, .content {
+        display: none !important;
+    }
+
+    /* Force main content to be visible */
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+</style>
+
+<div class="modern-dashboard">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <div class="header-info">
+                <h1 class="dashboard-title">
+                    <i class="bi bi-cpu"></i>
+                    CodeVision Dashboard
+                </h1>
+                <p class="dashboard-subtitle">AI-Powered Code Quality & Security Analysis</p>
             </div>
-            <div class="page-actions">
-                <button class="refresh-btn" @onclick="RefreshData" disabled="@isLoading">
-                    @if (isLoading)
-                    {
-                        <div class="refresh-spinner"></div>
-                    }
-                    else
-                    {
-                        <i class="bi bi-arrow-clockwise"></i>
-                    }
-                    <span>Yenile</span>
-                </button>
-            </div>
+            <button class="refresh-button @(isLoading ? "loading" : "")" @onclick="RefreshData" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <i class="bi bi-arrow-repeat spin"></i>
+                }
+                else
+                {
+                    <i class="bi bi-arrow-clockwise"></i>
+                }
+                Refresh
+            </button>
         </div>
     </div>
 
-    <!-- Metrics Cards -->
-    <div class="metrics-grid">
+    <!-- Stats Cards -->
+    <div class="stats-grid">
         @if (isLoading)
         {
-            <!-- Loading State -->
             @for (int i = 0; i < 4; i++)
             {
-                <div class="metric-card loading">
-                    <div class="metric-icon skeleton"></div>
-                    <div class="metric-content">
-                        <div class="metric-value skeleton-text"></div>
-                        <div class="metric-label skeleton-text"></div>
-                    </div>
-                    <div class="metric-trend skeleton-trend"></div>
+                <div class="stat-card loading">
+                    <div class="stat-skeleton"></div>
                 </div>
             }
         }
         else
         {
             <!-- Total Analyses -->
-            <div class="metric-card metric-primary">
-                <div class="metric-icon">
-                    <i class="bi bi-graph-up"></i>
+            <div class="stat-card analyses">
+                <div class="stat-icon">
+                    <i class="bi bi-file-earmark-code"></i>
                 </div>
-                <div class="metric-content">
-                    <div class="metric-value">@dashboardData?.TotalAnalyses</div>
-                    <div class="metric-label">Toplam Analiz</div>
-                </div>
-                <div class="metric-trend trend-up">
-                    <i class="bi bi-arrow-up"></i>
-                    <span>+12%</span>
+                <div class="stat-content">
+                    <div class="stat-number">@(dashboardData?.Overview?.TotalAnalyses ?? 0)</div>
+                    <div class="stat-label">Total Analyses</div>
+                    <div class="stat-description">Code reviews completed</div>
                 </div>
             </div>
 
             <!-- Average Quality -->
-            <div class="metric-card metric-success">
-                <div class="metric-icon">
-                    <i class="bi bi-award"></i>
+            <div class="stat-card quality @GetQualityCardClass()">
+                <div class="stat-icon">
+                    <i class="bi bi-speedometer2"></i>
                 </div>
-                <div class="metric-content">
-                    <div class="metric-value">@((int)(dashboardData?.AverageQuality ?? 0))</div>
-                    <div class="metric-label">Ortalama Kalite</div>
-                </div>
-                <div class="metric-trend trend-up">
-                    <i class="bi bi-arrow-up"></i>
-                    <span>+5%</span>
+                <div class="stat-content">
+                    <div class="stat-number">@(dashboardData?.Overview?.AverageQualityScore ?? 0)</div>
+                    <div class="stat-label">Average Quality</div>
+                    <div class="stat-description">@GetQualityDescription()</div>
                 </div>
             </div>
 
-            <!-- Pending Analyses -->
-            <div class="metric-card metric-warning">
-                <div class="metric-icon">
+            <!-- High Risk Issues -->
+            <div class="stat-card risk">
+                <div class="stat-icon">
+                    <i class="bi bi-shield-exclamation"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">@(dashboardData?.RiskDistribution?.High ?? 0)</div>
+                    <div class="stat-label">High Risk Issues</div>
+                    <div class="stat-description">Security vulnerabilities</div>
+                </div>
+            </div>
+
+            <!-- Queue Status -->
+            <div class="stat-card queue">
+                <div class="stat-icon">
                     <i class="bi bi-hourglass-split"></i>
                 </div>
-                <div class="metric-content">
-                    <div class="metric-value">@dashboardData?.PendingAnalyses</div>
-                    <div class="metric-label">Bekleyen</div>
-                </div>
-                <div class="metric-trend trend-neutral">
-                    <i class="bi bi-dash"></i>
-                    <span>0%</span>
-                </div>
-            </div>
-
-            <!-- High Risk -->
-            <div class="metric-card metric-danger">
-                <div class="metric-icon">
-                    <i class="bi bi-exclamation-triangle"></i>
-                </div>
-                <div class="metric-content">
-                    <div class="metric-value">@dashboardData?.HighRiskCount</div>
-                    <div class="metric-label">Yüksek Risk</div>
-                </div>
-                <div class="metric-trend trend-down">
-                    <i class="bi bi-arrow-down"></i>
-                    <span>-8%</span>
+                <div class="stat-content">
+                    <div class="stat-number">@(dashboardData?.Overview?.PendingAnalyses ?? 0)</div>
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-description">@GetQueueStatus()</div>
                 </div>
             </div>
         }
     </div>
 
-    <!-- Recent Analyses Only -->
-    @if (recentAnalyses?.Any() == true)
-    {
-        <div class="content-card">
-            <div class="card-header">
-                <div class="card-title">
-                    <i class="bi bi-clock-history"></i>
-                    <span>Son Analizler</span>
-                </div>
+    <!-- Recent Analyses -->
+    <div class="analyses-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="bi bi-clock-history"></i>
+                Recent Code Reviews
+            </h2>
+            <div class="section-actions">
+                @if (dashboardData?.RecentAnalyses?.Any() == true)
+                {
+                    <span class="analyses-count">@dashboardData.RecentAnalyses.Count() results</span>
+                }
             </div>
-            
-            <div class="card-content">
-                <div class="analyses-list">
-                    @foreach (var analysis in recentAnalyses.Take(5))
-                    {
-                        <div class="analysis-item">
-                            <div class="analysis-icon">
-                                <i class="bi bi-git"></i>
+        </div>
+
+        @if (dashboardData?.RecentAnalyses?.Any() == true)
+        {
+            <div class="analyses-grid">
+                @foreach (var analysis in dashboardData.RecentAnalyses.Take(6))
+                {
+                    <div class="analysis-card @GetAnalysisCardClass(analysis.RiskLevel)">
+                        <div class="analysis-header">
+                            <div class="analysis-repo">
+                                <i class="bi bi-github"></i>
+                                <span>@(string.IsNullOrEmpty(analysis.RepoName) ? "Unknown Repository" : analysis.RepoName.Split('/').LastOrDefault())</span>
                             </div>
-                            <div class="analysis-info">
-                                <div class="analysis-repo">@analysis.RepoName</div>
-                                <div class="analysis-title">@analysis.Title</div>
-                                <div class="analysis-meta">
-                                    <span class="analysis-pr">#@analysis.PrNumber</span>
-                                </div>
-                            </div>
-                            <div class="analysis-badges">
-                                <div class="quality-badge @GetQualityBadgeClass(analysis.QualityScore)">
-                                    @((int)analysis.QualityScore)
-                                </div>
+                            <div class="analysis-status">
+                                <span class="status-badge @GetStatusClass(analysis.Status)">@analysis.Status</span>
                             </div>
                         </div>
-                    }
+                        
+                        <div class="analysis-content">
+                            <h3 class="analysis-title">@GetFormattedTitle(analysis.PrTitle)</h3>
+                            <div class="analysis-pr">
+                                <i class="bi bi-git"></i>
+                                PR #@analysis.PrNumber by @analysis.PrAuthor
+                            </div>
+                        </div>
+
+                        <div class="analysis-metrics">
+                            <div class="metric">
+                                <div class="metric-value quality-score @GetQualityClass(analysis.QualityScore)">
+                                    @analysis.QualityScore
+                                </div>
+                                <div class="metric-label">Quality Score</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value risk-level @GetRiskClass(analysis.RiskLevel)">
+                                    <i class="@GetRiskIcon(analysis.RiskLevel)"></i>
+                                    @analysis.RiskLevel
+                                </div>
+                                <div class="metric-label">Risk Level</div>
+                            </div>
+                        </div>
+
+                        <div class="analysis-footer">
+                            <div class="analysis-time">
+                                <i class="bi bi-clock"></i>
+                                @GetTimeAgo(analysis.ProcessedAt)
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-illustration">
+                    <i class="bi bi-code-slash"></i>
+                </div>
+                <h3 class="empty-title">No Code Reviews Yet</h3>
+                <p class="empty-description">
+                    Connect your repository and create a pull request to start analyzing your code with AI.
+                </p>
+                <div class="empty-actions">
+                    <button class="primary-button" @onclick="RefreshData">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        Check for Updates
+                    </button>
                 </div>
             </div>
-        </div>
-    }
-    else
-    {
-        <div class="empty-state">
-            <div class="empty-icon">
-                <i class="bi bi-inbox"></i>
-            </div>
-            <div class="empty-text">Henüz analiz bulunamadı</div>
-            <div class="empty-subtext">İlk analiz için bir PR webhook'u bekleyin</div>
-        </div>
-    }
+        }
+    </div>
 </div>
 
 @code {
     private bool isLoading = true;
     private DashboardData? dashboardData;
-    private List<AnalysisItem>? recentAnalyses;
 
     protected override async Task OnInitializedAsync()
     {
@@ -176,18 +358,11 @@
 
         try
         {
-            var dashboardTask = ApiService.GetDashboardDataAsync();
-            var analysesTask = ApiService.GetRecentAnalysesAsync();
-
-            await Task.WhenAll(dashboardTask, analysesTask);
-
-            dashboardData = await dashboardTask;
-            recentAnalyses = await analysesTask;
+            dashboardData = await ApiService.GetDashboardDataAsync();
         }
         catch (Exception ex)
         {
-            // Log error (could use ILogger here)
-            Console.WriteLine($"Dashboard veri yükleme hatası: {ex.Message}");
+            Console.WriteLine($"Dashboard loading error: {ex.Message}");
         }
         finally
         {
@@ -201,47 +376,117 @@
         await LoadDashboardData();
     }
 
-    private string GetQualityBadgeClass(double quality)
+    private string GetQualityCardClass()
     {
-        return quality switch
+        var score = dashboardData?.Overview?.AverageQualityScore ?? 0;
+        return score switch
         {
-            >= 80 => "bg-success",
-            >= 60 => "bg-warning",
-            _ => "bg-danger"
+            >= 80 => "excellent",
+            >= 60 => "good", 
+            >= 40 => "fair",
+            _ => "poor"
         };
     }
 
-    private string GetRiskBadgeClass(string risk)
+    private string GetQualityDescription()
     {
-        return risk?.ToLower() switch
+        var score = dashboardData?.Overview?.AverageQualityScore ?? 0;
+        return score switch
         {
-            "low" or "düşük" => "bg-success",
-            "medium" or "orta" => "bg-warning",
-            "high" or "yüksek" => "bg-danger",
-            _ => "bg-secondary"
+            >= 80 => "Excellent code quality",
+            >= 60 => "Good code quality",
+            >= 40 => "Fair code quality", 
+            _ => "Needs improvement"
         };
     }
 
-    private string GetStatusBadgeClass(string status)
+    private string GetQueueStatus()
+    {
+        var pending = dashboardData?.Overview?.PendingAnalyses ?? 0;
+        return pending switch
+        {
+            0 => "Queue is empty",
+            1 => "1 analysis waiting",
+            _ => $"{pending} analyses waiting"
+        };
+    }
+
+    private string GetAnalysisCardClass(string riskLevel)
+    {
+        return riskLevel?.ToLower() switch
+        {
+            "high" => "high-risk",
+            "medium" => "medium-risk", 
+            "low" => "low-risk",
+            _ => "unknown-risk"
+        };
+    }
+
+    private string GetStatusClass(string status)
     {
         return status?.ToLower() switch
         {
-            "completed" or "tamamlandı" => "bg-success",
-            "processing" or "işleniyor" => "bg-info",
-            "pending" or "bekliyor" => "bg-warning",
-            "failed" or "başarısız" => "bg-danger",
-            _ => "bg-secondary"
+            "completed" => "completed",
+            "pending" => "pending",
+            "processing" => "processing",
+            "failed" => "failed",
+            _ => "unknown"
         };
     }
 
-    private string GetRiskIcon(string risk)
+    private string GetQualityClass(int score)
     {
-        return risk?.ToLower() switch
+        return score switch
         {
-            "low" or "düşük" => "bi bi-check-circle",
-            "medium" or "orta" => "bi bi-exclamation-circle",
-            "high" or "yüksek" => "bi bi-x-circle",
+            >= 80 => "excellent",
+            >= 60 => "good",
+            >= 40 => "fair",
+            _ => "poor"
+        };
+    }
+
+    private string GetRiskClass(string riskLevel)
+    {
+        return riskLevel?.ToLower() switch
+        {
+            "high" => "high-risk",
+            "medium" => "medium-risk",
+            "low" => "low-risk", 
+            _ => "unknown-risk"
+        };
+    }
+
+    private string GetRiskIcon(string riskLevel)
+    {
+        return riskLevel?.ToLower() switch
+        {
+            "high" => "bi bi-shield-exclamation",
+            "medium" => "bi bi-shield-check",
+            "low" => "bi bi-shield",
             _ => "bi bi-question-circle"
+        };
+    }
+
+    private string GetFormattedTitle(string title)
+    {
+        if (string.IsNullOrEmpty(title))
+            return "Untitled Pull Request";
+        
+        // Truncate long titles
+        return title.Length > 60 ? $"{title[..60]}..." : title;
+    }
+
+    private string GetTimeAgo(DateTime processedAt)
+    {
+        var timeSpan = DateTime.UtcNow - processedAt.ToUniversalTime();
+        
+        return timeSpan.TotalDays switch
+        {
+            >= 7 => $"{(int)(timeSpan.TotalDays / 7)} week(s) ago",
+            >= 1 => $"{(int)timeSpan.TotalDays} day(s) ago",
+            >= 1/24.0 => $"{(int)timeSpan.TotalHours} hour(s) ago",
+            >= 1/(24.0 * 60) => $"{(int)timeSpan.TotalMinutes} minute(s) ago",
+            _ => "Just now"
         };
     }
 }
