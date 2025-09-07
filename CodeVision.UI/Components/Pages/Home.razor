@@ -2,6 +2,7 @@
 @using CodeVision.UI.Services
 @inject IApiService ApiService
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.SignalR.Client
 @implements IAsyncDisposable
 
 <PageTitle>CodeVision - AI Code Analysis Dashboard</PageTitle>
@@ -737,7 +738,7 @@
                 {
                     <div class="detail-section">
                         <div class="detail-header">
-                            <h4><i class="bi bi-bug"></i> Static Analysis Findings (@selectedAnalysis.RoslynFindings.Count)</h4>
+                            <h4><i class="bi bi-bug"></i> Roslyn Findings (@selectedAnalysis.RoslynFindings.Count)</h4>
                         </div>
                         <div class="findings-list">
                             @foreach (var finding in selectedAnalysis.RoslynFindings)
@@ -775,14 +776,12 @@
     private bool showDetailModal = false;
     private AnalysisDetail? selectedAnalysis = null;
     private bool loadingDetail = false;
-    private CancellationTokenSource? autoRefreshCts;
-    private Task? autoRefreshTask;
+    private HubConnection? hubConnection;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadDashboardData();
-        autoRefreshCts = new CancellationTokenSource();
-        autoRefreshTask = RunAutoRefreshAsync(autoRefreshCts.Token);
+        await InitializeSignalRAsync();
     }
 
     private async Task LoadDashboardData()
@@ -810,27 +809,49 @@
         await LoadDashboardData();
     }
 
-    private async Task RunAutoRefreshAsync(CancellationToken token)
+    private async Task InitializeSignalRAsync()
     {
-        var timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
         try
         {
-            while (await timer.WaitForNextTickAsync(token))
+            var baseUrl = NavigationManager.BaseUri.TrimEnd('/');
+            hubConnection = new HubConnectionBuilder()
+                .WithUrl($"{baseUrl}/hubs/analysis")
+                .WithAutomaticReconnect()
+                .Build();
+
+            hubConnection.On<string>("AnalysisUpdated", async _ =>
             {
-                if (!showDetailModal && !loadingDetail)
+                if (!loadingDetail)
                 {
-                    await InvokeAsync(LoadDashboardData);
+                    await LoadDashboardData();
+                    await InvokeAsync(StateHasChanged);
+                    await PlayNotificationSoundAsync();
                 }
-            }
+            });
+
+            hubConnection.On<string>("AnalysisCompleted", async _ =>
+            {
+                await LoadDashboardData();
+                await InvokeAsync(StateHasChanged);
+                await PlayNotificationSoundAsync();
+            });
+
+            await hubConnection.StartAsync();
         }
-        catch (OperationCanceledException)
+        catch
         {
-            // ignored
+            // ignore
         }
-        finally
+    }
+
+    private async Task PlayNotificationSoundAsync()
+    {
+        try
         {
-            timer.Dispose();
+            var js = (IJSRuntime)Context.Services.GetService(typeof(IJSRuntime))!;
+            await js.InvokeVoidAsync("CodeVision.playChime");
         }
+        catch { }
     }
 
     private string GetQualityCardClass()
@@ -996,16 +1017,9 @@
 
     public async ValueTask DisposeAsync()
     {
-        if (autoRefreshCts != null)
+        if (hubConnection is not null)
         {
-            autoRefreshCts.Cancel();
-            autoRefreshCts.Dispose();
-            autoRefreshCts = null;
-        }
-
-        if (autoRefreshTask != null)
-        {
-            try { await autoRefreshTask; } catch (OperationCanceledException) { }
+            try { await hubConnection.DisposeAsync(); } catch { }
         }
     }
 }

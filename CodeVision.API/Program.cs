@@ -191,6 +191,7 @@ else
 app.UseCors("AllowUI");
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<CodeVision.API.Hubs.AnalysisNotificationHub>("/hubs/analysis");
 
 // API responses should not be cached by intermediaries/clients
 app.Use(async (context, next) =>

@@ -93,9 +93,45 @@ public class ApiService : IApiService
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                     PropertyNameCaseInsensitive = true
                 };
-                
-                var result = JsonSerializer.Deserialize<AnalysisDetail>(content, options);
-                Console.WriteLine($"✅ DETAILS DESERIALIZE BAŞARILI: {result?.Id}");
+
+                var result = JsonSerializer.Deserialize<AnalysisDetail>(content, options) ?? new AnalysisDetail();
+
+                // Fallback: gptSuggestions alanını manuel parse et (deser. uyuşmazlıklarına karşı)
+                try
+                {
+                    using var doc = JsonDocument.Parse(content);
+                    if (doc.RootElement.TryGetProperty("gptSuggestions", out var gs) && gs.ValueKind == JsonValueKind.Array)
+                    {
+                        var list = new List<GptSuggestion>();
+                        foreach (var item in gs.EnumerateArray())
+                        {
+                            var s = new GptSuggestion
+                            {
+                                Type = item.TryGetProperty("type", out var t) ? t.GetString() ?? string.Empty : string.Empty,
+                                Title = item.TryGetProperty("title", out var ti) ? ti.GetString() ?? string.Empty : string.Empty,
+                                Description = item.TryGetProperty("description", out var d) ? d.GetString() ?? string.Empty : string.Empty,
+                                Priority = item.TryGetProperty("priority", out var p) ? p.GetString() ?? string.Empty : string.Empty,
+                                Category = item.TryGetProperty("category", out var c) ? c.GetString() ?? string.Empty : string.Empty,
+                                SuggestedCode = item.TryGetProperty("suggestedCode", out var sc) ? sc.GetString() ?? string.Empty : string.Empty,
+                                ImpactScore = item.TryGetProperty("impactScore", out var iscore) && iscore.TryGetInt32(out var iv) ? iv : 0,
+                                Tags = item.TryGetProperty("tags", out var tags) && tags.ValueKind == JsonValueKind.Array
+                                    ? tags.EnumerateArray().Select(x => x.GetString() ?? string.Empty).Where(x => !string.IsNullOrWhiteSpace(x)).ToList()
+                                    : new List<string>()
+                            };
+                            list.Add(s);
+                        }
+                        if (list.Count > 0)
+                        {
+                            result.GptSuggestions = list;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ GPT suggestions manual parse skipped: {ex.Message}");
+                }
+
+                Console.WriteLine($"✅ DETAILS DESERIALIZE BAŞARILI: {result?.Id}, GPT Count: {result?.GptSuggestions?.Count}");
                 return result;
             }
             else
