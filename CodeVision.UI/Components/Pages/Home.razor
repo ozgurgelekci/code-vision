@@ -1073,6 +1073,7 @@
             hubConnection.On<PrClosedNotification>("PullRequestClosed", async pr =>
             {
                 await JS.InvokeVoidAsync("console.log", $"🔴 PullRequestClosed event received: {pr?.Repo} #{pr?.PrNumber}");
+                await JS.InvokeVoidAsync("alert", "🔴 PR Closed Event Received!");
                 
                 var repo = pr?.Repo ?? string.Empty;
                 var number = pr?.PrNumber ?? 0;
