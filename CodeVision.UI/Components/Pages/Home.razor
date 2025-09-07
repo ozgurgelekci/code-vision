@@ -616,17 +616,22 @@
                 </h1>
                 <p class="dashboard-subtitle">AI-Powered Code Quality & Security Analysis</p>
             </div>
-            <button class="refresh-button @(isLoading ? "loading" : "")" @onclick="RefreshData" disabled="@isLoading">
-                @if (isLoading)
-                {
-                    <i class="bi bi-arrow-repeat spin"></i>
-                }
-                else
-                {
-                    <i class="bi bi-arrow-clockwise"></i>
-                }
-                Refresh
-            </button>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary" @onclick="TestSignalR">
+                    <i class="bi bi-broadcast"></i> Test SignalR
+                </button>
+                <button class="refresh-button @(isLoading ? "loading" : "")" @onclick="RefreshData" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <i class="bi bi-arrow-repeat spin"></i>
+                    }
+                    else
+                    {
+                        <i class="bi bi-arrow-clockwise"></i>
+                    }
+                    Refresh
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1002,6 +1007,12 @@
     {
         await LoadDashboardData();
     }
+    
+    private async Task TestSignalR()
+    {
+        await JS.InvokeVoidAsync("console.log", "🧪 Testing SignalR...");
+        await JS.InvokeVoidAsync("fetch", "/webhook/test-pr-closed", new { method = "POST" });
+    }
 
     private async Task InitializeSignalRAsync()
     {
@@ -1073,7 +1084,6 @@
             hubConnection.On<PrClosedNotification>("PullRequestClosed", async pr =>
             {
                 await JS.InvokeVoidAsync("console.log", $"🔴 PullRequestClosed event received: {pr?.Repo} #{pr?.PrNumber}");
-                await JS.InvokeVoidAsync("alert", "🔴 PR Closed Event Received!");
                 
                 var repo = pr?.Repo ?? string.Empty;
                 var number = pr?.PrNumber ?? 0;
@@ -1119,10 +1129,13 @@
             await JS.InvokeVoidAsync("console.log", "🔗 Starting SignalR connection...");
             await hubConnection.StartAsync();
             await JS.InvokeVoidAsync("console.log", $"✅ SignalR connected! State: {hubConnection.State}");
+            
+            // Global window object'e SignalR'ı ekle
+            await JS.InvokeVoidAsync("eval", "window.hubConnection = arguments[0];", DotNetObjectReference.Create(hubConnection));
         }
-        catch
+        catch (Exception ex)
         {
-            // ignore
+            await JS.InvokeVoidAsync("console.error", $"❌ SignalR connection failed: {ex.Message}");
         }
     }
 
