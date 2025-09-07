@@ -63,6 +63,7 @@ public class AnalysesController : ControllerBase
             // Get GPT suggestions  
             var gptSuggestions = await _analysisService.GetGptSuggestionsAsync(id);
 
+            var normalizedSummary = NormalizeSummaryToHtml(analysis.Summary ?? string.Empty);
             var result = new
             {
                 id = analysis.Id,
@@ -73,7 +74,7 @@ public class AnalysesController : ControllerBase
                 status = analysis.Status.ToString(),
                 qualityScore = analysis.QualityScore,
                 riskLevel = analysis.RiskLevel.ToString(),
-                summary = SanitizeSummary(analysis.Summary ?? string.Empty),
+                summary = SanitizeSummary(normalizedSummary),
                 processedAt = analysis.ProcessedAt,
                 createdAt = analysis.CreatedAt,
                 roslynFindings = roslynFindings?.Select(f => (object)new
@@ -132,5 +133,75 @@ public class AnalysesController : ControllerBase
         sanitized = Regex.Replace(sanitized, $@"</?(?!({allowed}))\\w+[^>]*>", string.Empty, RegexOptions.IgnoreCase);
 
         return sanitized;
+    }
+
+    private static string NormalizeSummaryToHtml(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+
+        // If already contains list markup, return as-is
+        if (input.Contains("<ol") || input.Contains("<ul"))
+        {
+            return input;
+        }
+
+        var lines = input.Replace("\r\n", "\n").Split('\n');
+        var sb = new System.Text.StringBuilder();
+        var inOl = false;
+
+        foreach (var raw in lines)
+        {
+            var line = raw?.TrimEnd() ?? string.Empty;
+            var numberMatch = System.Text.RegularExpressions.Regex.Match(line, @"^\s*\d+[\.)]\s+(.*)$");
+
+            if (numberMatch.Success)
+            {
+                if (!inOl)
+                {
+                    sb.Append("<ol>");
+                    inOl = true;
+                }
+
+                var content = numberMatch.Groups[1].Value.Trim();
+
+                // If pattern like "Title: description" then move description to next line
+                var colonIdx = content.IndexOf(':');
+                if (colonIdx > 0 && colonIdx < 120)
+                {
+                    var head = content.Substring(0, colonIdx).Trim();
+                    var rest = content.Substring(colonIdx + 1).Trim();
+                    sb.Append("<li><strong>" + System.Net.WebUtility.HtmlEncode(head) + "</strong>");
+                    if (!string.IsNullOrEmpty(rest))
+                    {
+                        sb.Append("<br/>" + System.Net.WebUtility.HtmlEncode(rest));
+                    }
+                    sb.Append("</li>");
+                }
+                else
+                {
+                    sb.Append("<li>" + System.Net.WebUtility.HtmlEncode(content) + "</li>");
+                }
+            }
+            else
+            {
+                if (inOl)
+                {
+                    sb.Append("</ol>");
+                    inOl = false;
+                }
+
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    sb.Append("<p>" + line + "</p>");
+                }
+            }
+        }
+
+        if (inOl)
+        {
+            sb.Append("</ol>");
+        }
+
+        return sb.ToString();
     }
 }
