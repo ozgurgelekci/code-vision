@@ -980,6 +980,15 @@
     {
         await LoadDashboardData();
         await InitializeSignalRAsync();
+        
+        // API erişim testi
+        await JS.InvokeVoidAsync("eval", @"
+            console.log('🌐 Testing API access...');
+            fetch('http://localhost:8080/api/health')
+                .then(r => r.json())
+                .then(data => console.log('✅ API accessible:', data))
+                .catch(err => console.error('❌ API not accessible:', err));
+        ");
     }
 
     private async Task LoadDashboardData()
@@ -1011,7 +1020,14 @@
     private async Task TestSignalR()
     {
         await JS.InvokeVoidAsync("console.log", "🧪 Testing SignalR...");
-        await JS.InvokeVoidAsync("fetch", "/webhook/test-pr-closed", new { method = "POST" });
+        
+        // JavaScript ile fetch yap
+        await JS.InvokeVoidAsync("eval", @"
+            fetch('/webhook/test-pr-closed', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => console.log('🔴 API Response:', data))
+                .catch(err => console.error('❌ API Error:', err));
+        ");
     }
 
     private async Task InitializeSignalRAsync()
@@ -1130,8 +1146,14 @@
             await hubConnection.StartAsync();
             await JS.InvokeVoidAsync("console.log", $"✅ SignalR connected! State: {hubConnection.State}");
             
-            // Global window object'e SignalR'ı ekle
-            await JS.InvokeVoidAsync("eval", "window.hubConnection = arguments[0];", DotNetObjectReference.Create(hubConnection));
+            // JavaScript'e SignalR bağlantısını expose et
+            await JS.InvokeVoidAsync("eval", @"
+                window.hubConnection = {
+                    state: 'Connected',
+                    connection: { url: '" + hubUrl + @"' }
+                };
+                console.log('🔗 SignalR exposed to window:', window.hubConnection);
+            ");
         }
         catch (Exception ex)
         {
