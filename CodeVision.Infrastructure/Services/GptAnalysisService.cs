@@ -149,7 +149,7 @@ Sonra aşağıdaki bölümleri kısa ve uygulanabilir maddeler halinde ver:
 PR Başlığı: {prTitle}
 
 Diff:
-{TruncateContent(diffContent, 4000)}
+{TruncateContent(diffContent, 12000)}
 
 Türkçe yanıt ver. Sonucu HTML başlıkları ve listeler kullanarak yapılandır:
 <h4>Özet</h4>
@@ -169,7 +169,7 @@ Her öneri için kısa bir kod örneği ver. Ayrıca riskleri de not et (örn. d
 
 Dosya: {fileName}
 Kod:
-{TruncateContent(codeSnippet, 2000)}
+{TruncateContent(codeSnippet, 8000)}
 
 Aşağıdaki şema ile JSON döndür:
 {{
@@ -194,7 +194,7 @@ Aşağıdaki şema ile JSON döndür:
 Her bulgu için bir öncelik ve net bir düzeltme önerisi ver.
 
 Kod:
-{TruncateContent(diffContent, 3000)}
+{TruncateContent(diffContent, 10000)}
 
 Bu şema ile JSON döndür:
 {{
@@ -218,7 +218,7 @@ Bu şema ile JSON döndür:
 Race condition'ları, deadlock risklerini veya exception'ların yanlış kullanımını belirt.
 
 Kod:
-{TruncateContent(codeSnippet, 2000)}
+{TruncateContent(codeSnippet, 8000)}
 
 Bu şema ile JSON döndür:
 {{
