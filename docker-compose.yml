@@ -41,7 +41,7 @@ services:
       - api
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ApiSettings__BaseUrl: http://api:8080
+      ApiSettings__BaseUrl: https://code-vision.up.railway.app
     ports:
       - "3001:8080"
 
