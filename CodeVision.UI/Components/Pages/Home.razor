@@ -946,6 +946,10 @@
                     message: $"{repo} · #{number}\n{title} — {author}",
                     variant: "info");
                 await PlayNotificationSoundAsync();
+                
+                // Refresh dashboard to show new PR in the list
+                await LoadDashboardData();
+                await InvokeAsync(StateHasChanged);
             });
 
             hubConnection.On<PrClosedNotification>("PullRequestClosed", async pr =>
