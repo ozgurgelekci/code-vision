@@ -617,7 +617,7 @@
                 <p class="dashboard-subtitle">AI-Powered Code Quality & Security Analysis</p>
             </div>
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-secondary" @onclick="TestSignalR">
+                <button class="btn btn-outline-secondary" @onclick="TestAPI">
                     <i class="bi bi-broadcast"></i> Test API
                 </button>
                 <button class="refresh-button @(isLoading ? "loading" : "")" @onclick="RefreshData" disabled="@isLoading">
@@ -979,8 +979,6 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadDashboardData();
-        // SignalR yerine polling başlat
-        StartPolling();
     }
 
     private async Task LoadDashboardData()
@@ -1045,17 +1043,32 @@
         JS.InvokeVoidAsync("console.log", "🔄 Polling started - checking every 5 seconds");
     }
     
-    private async Task TestSignalR()
+    private async Task TestAPI()
     {
-        await JS.InvokeVoidAsync("console.log", "🧪 Testing API endpoint...");
-        
-        // JavaScript ile fetch yap
-        await JS.InvokeVoidAsync("eval", @"
-            fetch('/webhook/test-pr-closed', { method: 'POST' })
-                .then(r => r.json())
-                .then(data => console.log('🔴 API Response:', data))
-                .catch(err => console.error('❌ API Error:', err));
-        ");
+        try
+        {
+            await JS.InvokeVoidAsync("console.log", "🧪 Testing API endpoint...");
+            
+            // Test endpoint'ini çağır
+            using var httpClient = new HttpClient();
+            httpClient.BaseAddress = new Uri("http://localhost:8080");
+            var response = await httpClient.PostAsync("/webhook/test-pr-closed", null);
+            var result = await response.Content.ReadAsStringAsync();
+            
+            await JS.InvokeVoidAsync("console.log", $"🔴 API Response: {result}");
+            
+            // Toast göster
+            ShowToast("API Test", "Test PR closed event sent!", "info");
+            
+            // 2 saniye sonra refresh yap
+            await Task.Delay(2000);
+            await RefreshData();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("console.error", $"❌ API Test Error: {ex.Message}");
+            ShowToast("API Test Error", ex.Message, "danger");
+        }
     }
 
     private async Task InitializeSignalRAsync()
