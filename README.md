@@ -167,3 +167,9 @@ docker run -d --name codevision_ui --network codevision-network -p 3001:8080 \
 
 ## 📄 License
 MIT
+
+## 👨‍💻 Developer / Geliştirici
+
+- İsim/Name: Özgür Gelekci
+- GitHub: [ozgurgelekci](https://github.com/ozgurgelekci)
+- Issues & Contact: [Repository Issues](https://github.com/ozgurgelekci/code-vision/issues)
