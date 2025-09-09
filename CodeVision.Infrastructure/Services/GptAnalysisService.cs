@@ -149,7 +149,7 @@ Then, provide the following sections in short, actionable bullet points:
 PR Title: {prTitle}
 
 Diff:
-{TruncateContent(diffContent, 12000)}
+{diffContent}
 
 Respond in English. Structure the output using HTML headings and lists:
 <h4>Summary</h4>
@@ -169,7 +169,7 @@ Provide a brief code example for each suggestion. Also note potential risks (e.g
 
 File: {fileName}
 Code:
-{TruncateContent(codeSnippet, 8000)}
+{codeSnippet}
 
 Respond in English. Return JSON with the following schema:
 {{
@@ -194,7 +194,7 @@ Respond in English. Return JSON with the following schema:
 For each finding, provide a priority and a clear fix suggestion.
 
 Code:
-{TruncateContent(diffContent, 10000)}
+{diffContent}
 
 Respond in English. Return JSON with the following schema:
 {{
@@ -218,7 +218,7 @@ Respond in English. Return JSON with the following schema:
 Point out race conditions, deadlock risks, or improper exception usage.
 
 Code:
-{TruncateContent(codeSnippet, 8000)}
+{codeSnippet}
 
 Respond in English. Return JSON with the following schema:
 {{
@@ -281,7 +281,7 @@ Respond in English. Return JSON with the following schema:
                 {
                     Type = defaultType,
                     Title = "GPT Analysis",
-                    Description = TruncateContent(content, 500),
+                    Description = content,
                     FilePath = defaultFileName,
                     Priority = Priority.Medium,
                     Category = "code_quality",
@@ -298,7 +298,7 @@ Respond in English. Return JSON with the following schema:
             {
                 Type = defaultType,
                 Title = "GPT Analysis (Parse Error)",
-                Description = TruncateContent(content, 500),
+                Description = content ?? string.Empty,
                 FilePath = defaultFileName,
                 Priority = Priority.Low,
                 Category = "code_quality",
