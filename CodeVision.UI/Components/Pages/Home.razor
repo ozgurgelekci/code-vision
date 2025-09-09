@@ -82,7 +82,7 @@
     .toast .toast-text { font-size: 13px !important; opacity: .95 !important; }
     .toast .toast-close { background: transparent !important; color: #9ca3af !important; border: none !important; cursor: pointer !important; }
     .toast .progress { height: 3px !important; background: rgba(255,255,255,.15) !important; border-radius: 2px !important; overflow: hidden !important; margin-top: 8px !important; }
-    .toast .progress > div { height: 100% !important; background: #3b82f6 !important; width: 100% !important; animation: countdown 60s linear forwards !important; }
+    .toast .progress > div { height: 100% !important; background: #3b82f6 !important; width: 100% !important; animation: countdown 20s linear forwards !important; }
     .toast.success .progress > div { background: #10b981 !important; }
     .toast.warning .progress > div { background: #f59e0b !important; }
     @@keyframes countdown { from { width: 100% } to { width: 0 } }
@@ -185,6 +185,12 @@
 
     .analysis-card.low-risk {
         border-left: 4px solid #10b981 !important;
+    }
+
+    /* In-progress status warning background */
+    .analysis-card.processing {
+        background: #FFFBEB !important; /* warm amber-50 */
+        border-left: 4px solid #f59e0b !important;
     }
 
     /* Detail Button */
@@ -577,7 +583,7 @@
     .progress div {
         height: 100% !important;
         background: #3b82f6 !important;
-        animation: progressBar 60s linear forwards !important;
+        animation: progressBar 20s linear forwards !important;
     }
 
     @@keyframes slideInRight {
@@ -598,6 +604,15 @@
         to {
             width: 0% !important;
         }
+    }
+
+    /* Toast countdown text */
+    .toast-time {
+        font-size: 12px !important;
+        color: #9ca3af !important;
+        margin-top: 6px !important;
+        text-align: right !important;
+        display: block !important;
     }
 </style>
 
@@ -699,7 +714,7 @@
             <div class="analyses-grid">
                 @foreach (var analysis in dashboardData.RecentAnalyses.Take(6))
                 {
-                    <div class="analysis-card @GetAnalysisCardClass(analysis.RiskLevel)">
+                    <div class="analysis-card @GetAnalysisCardClass(analysis.RiskLevel) @GetStatusClass(analysis.Status)">
                         <div class="analysis-header">
                             <div class="analysis-repo">
                                 <i class="bi bi-github"></i>
@@ -918,6 +933,7 @@
             <div>
                 <div class="toast-title">@toastTitle</div>
                 <div class="toast-text">@toastMessage</div>
+                <span class="toast-time">@toastCountdown s</span>
                 <div class="progress"><div></div></div>
             </div>
             <button class="toast-close" @onclick="CloseToast"><i class="bi bi-x-lg"></i></button>
@@ -937,6 +953,7 @@
     private string toastMessage = string.Empty;
     private string toastVariant = "info";
     private System.Timers.Timer? toastTimer;
+    private int toastCountdown = 0;
 
     private sealed class NewPrNotification
     {
@@ -1272,18 +1289,27 @@
         toastMessage = message;
         toastVariant = variant;
         showToast = true;
+        toastCountdown = 20;
         toastTimer?.Stop();
         toastTimer?.Dispose();
-        toastTimer = new System.Timers.Timer(60_000);
-        toastTimer.Elapsed += (_, __) =>
+        toastTimer = new System.Timers.Timer(1000);
+        toastTimer.Elapsed += async (_, __) =>
         {
-            showToast = false;
-            InvokeAsync(StateHasChanged);
-            toastTimer?.Stop();
-            toastTimer?.Dispose();
-            toastTimer = null;
+            if (toastCountdown > 0)
+            {
+                toastCountdown--;
+                await InvokeAsync(StateHasChanged);
+                if (toastCountdown == 0)
+                {
+                    showToast = false;
+                    await InvokeAsync(StateHasChanged);
+                    toastTimer?.Stop();
+                    toastTimer?.Dispose();
+                    toastTimer = null;
+                }
+            }
         };
-        toastTimer.AutoReset = false;
+        toastTimer.AutoReset = true;
         toastTimer.Start();
         InvokeAsync(StateHasChanged);
     }
@@ -1294,5 +1320,6 @@
         toastTimer?.Stop();
         toastTimer?.Dispose();
         toastTimer = null;
+        toastCountdown = 0;
     }
 }
