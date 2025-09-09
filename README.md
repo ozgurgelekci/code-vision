@@ -2,6 +2,11 @@
 
 GitHub PR'larını otomatik analiz eden; Roslyn ve (opsiyonel) GPT ile özet/öneri üreten, arka planda kuyruk ile çalışan ve Blazor UI'da sonuçları gösteren servis.
 
+## ℹ️ About / Hakkında
+
+- Türkçe: GitHub PR'larını otomatik analiz eder; Roslyn ve GPT ile özet/öneri üretir; SignalR ile gerçek zamanlı bildirimler sağlar.
+- English: Automatically analyzes GitHub PRs; generates Roslyn/GPT summaries and suggestions; provides real-time notifications via SignalR.
+
 ## 🚀 Güncel Özellikler
 
 - GitHub Webhook ile otomatik tetikleme (`opened/synchronize/reopened/closed`)
