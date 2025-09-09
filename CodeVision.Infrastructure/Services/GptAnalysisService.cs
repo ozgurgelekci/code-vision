@@ -151,7 +151,7 @@ PR Başlığı: {prTitle}
 Diff:
 {TruncateContent(diffContent, 12000)}
 
-Türkçe yanıt ver. Sonucu HTML başlıkları ve listeler kullanarak yapılandır:
+İngilizce yanıt ver. Sonucu HTML başlıkları ve listeler kullanarak yapılandır:
 <h4>Özet</h4>
 - 2-3 cümlelik özet
 

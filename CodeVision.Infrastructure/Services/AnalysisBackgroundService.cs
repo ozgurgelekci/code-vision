@@ -110,8 +110,16 @@ public class AnalysisBackgroundService : BackgroundService
             await analysisService.UpdateAnalysisAsync(analysis);
             await _queue.CompleteJobAsync(job.Id);
 
-            // Send completed notification
-            // await notificationService.SendAnalysisCompletedAsync(analysis.Id, analysis.QualityScore, analysis.RiskLevel);
+            // Send completed notification via SignalR hub
+            try
+            {
+                var hub = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.SignalR.IHubContext<CodeVision.Infrastructure.Hubs.AnalysisNotificationHub>>();
+                await hub.Clients.All.SendAsync("AnalysisCompleted", analysis.Id);
+            }
+            catch (Exception hubEx)
+            {
+                _logger.LogWarning(hubEx, "AnalysisCompleted hub notification failed");
+            }
 
             // High risk check
             if (analysis.RiskLevel == RiskLevel.High)
