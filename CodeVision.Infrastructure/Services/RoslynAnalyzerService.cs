@@ -28,7 +28,8 @@ public class RoslynAnalyzerService : IRoslynAnalyzerService
                 .AddSyntaxTrees(syntaxTree)
                 .AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
 
-            var diagnostics = compilation.GetDiagnostics();
+            // Use syntax-only diagnostics to avoid false negatives from missing references
+            var diagnostics = syntaxTree.GetDiagnostics();
             
             foreach (var diagnostic in diagnostics)
             {
@@ -295,11 +296,7 @@ public class RoslynAnalyzerService : IRoslynAnalyzerService
                     // Eklenen satırlar
                     currentContent.AppendLine(line[1..]);
                 }
-                else if (!line.StartsWith("-") && !line.StartsWith("@@") && !line.StartsWith("index"))
-                {
-                    // Değişmemiş satırlar
-                    currentContent.AppendLine(line);
-                }
+                // Unchanged lines are ignored to reduce noise and false diagnostics
             }
 
             // Son dosyayı kaydet
