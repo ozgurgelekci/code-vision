@@ -103,6 +103,7 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IPullRequestAnalysisService, PullRequestAnalysisService>();
 builder.Services.AddScoped<IRoslynAnalyzerService, RoslynAnalyzerService>();
 builder.Services.AddScoped<IGptAnalysisService, GptAnalysisService>();
+builder.Services.AddScoped<IGitHubPullRequestService, GitHubPullRequestService>();
 
 // Background Services
 builder.Services.AddSingleton<IAnalysisQueue, InMemoryAnalysisQueue>();

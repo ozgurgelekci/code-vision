@@ -63,6 +63,7 @@ public class AnalysisBackgroundService : BackgroundService
 
             var analysisService = scope.ServiceProvider.GetRequiredService<IPullRequestAnalysisService>();
             var roslynService = scope.ServiceProvider.GetRequiredService<IRoslynAnalyzerService>();
+            var ghService = scope.ServiceProvider.GetRequiredService<CodeVision.Core.Interfaces.IGitHubPullRequestService>();
             var gptService = scope.ServiceProvider.GetRequiredService<IGptAnalysisService>();
             // var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
             
@@ -92,8 +93,8 @@ public class AnalysisBackgroundService : BackgroundService
             // Send started notification
             // await notificationService.SendAnalysisStartedAsync(analysis.Id);
 
-            // No mock diff content; real provider should supply diff content in future
-            string diffContent = string.Empty;
+            // Fetch real diff content from GitHub
+            string diffContent = await ghService.GetPullRequestDiffAsync(job.RepoName, job.PrNumber);
 
             // Run Roslyn analysis
             var roslynFindings = await roslynService.AnalyzePullRequestDiffAsync(diffContent);
