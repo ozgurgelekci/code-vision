@@ -172,4 +172,5 @@ MIT
 
 - İsim/Name: Özgür Gelekci
 - GitHub: [ozgurgelekci](https://github.com/ozgurgelekci)
+- LinkedIn: [linkedin.com/in/ozgurgelekci](https://www.linkedin.com/in/ozgurgelekci)
 - Issues & Contact: [Repository Issues](https://github.com/ozgurgelekci/code-vision/issues)
