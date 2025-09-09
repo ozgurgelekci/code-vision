@@ -37,7 +37,7 @@ public class GptAnalysisService : IGptAnalysisService
         if (_chatClient == null)
         {
             _logger.LogWarning("OpenAI client yapılandırılmamış, varsayılan özet döndürülüyor");
-            return $"PR Başlığı: {prTitle}\nÖzet: OpenAI entegrasyonu yapılandırılmamış.";
+            return $"PR Title: {prTitle}\nSummary: OpenAI integration is not configured.";
         }
 
         try
@@ -45,12 +45,12 @@ public class GptAnalysisService : IGptAnalysisService
             var prompt = CreateSummaryPrompt(diffContent, prTitle);
             var response = await _chatClient.CompleteChatAsync(prompt);
             
-            return response.Value.Content[0].Text ?? "Özet oluşturulamadı.";
+            return response.Value.Content[0].Text ?? "Summary could not be generated.";
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "GPT özet oluşturma hatası");
-            return $"PR Başlığı: {prTitle}\nÖzet: Otomatik analiz sırasında hata oluştu.";
+            return $"PR Title: {prTitle}\nSummary: An error occurred during automated analysis.";
         }
     }
 
@@ -143,46 +143,46 @@ public class GptAnalysisService : IGptAnalysisService
 
     private string CreateSummaryPrompt(string diffContent, string prTitle)
     {
-        return $@"Aşağıdaki kod değişikliklerini analiz et. Önce ne değiştiğini 2-3 cümlede özetle.
-Sonra aşağıdaki bölümleri kısa ve uygulanabilir maddeler halinde ver:
+        return $@"Analyze the following code changes. First, summarize what changed in 2-3 sentences.
+Then, provide the following sections in short, actionable bullet points:
 
-PR Başlığı: {prTitle}
+PR Title: {prTitle}
 
 Diff:
 {TruncateContent(diffContent, 12000)}
 
-İngilizce yanıt ver. Sonucu HTML başlıkları ve listeler kullanarak yapılandır:
-<h4>Özet</h4>
-- 2-3 cümlelik özet
+Respond in English. Structure the output using HTML headings and lists:
+<h4>Summary</h4>
+- 2-3 sentence summary
 
-<h4>Potansiyel Sorunlar</h4>
-- Potansiyel hata veya risklerin numaralı listesi (varsa)
+<h4>Potential Issues</h4>
+- Numbered list of potential bugs or risks (if any)
 
-<h4>İyileştirme Önerileri</h4>
-- Refaktör veya kalite iyileştirmelerinin numaralı listesi";
+<h4>Improvement Suggestions</h4>
+- Numbered list of refactoring or quality improvements";
     }
 
     private string CreateRefactorPrompt(string codeSnippet, string fileName)
     {
-        return $@"Bu metodu veya sınıfı daha okunabilir, test edilebilir ve performanslı hale getirmek için somut adımları listele.
-Her öneri için kısa bir kod örneği ver. Ayrıca riskleri de not et (örn. davranış değişikliği veya uyumluluk).
+        return $@"List concrete steps to make this method or class more readable, testable, and performant.
+Provide a brief code example for each suggestion. Also note potential risks (e.g., behavior changes or compatibility).
 
-Dosya: {fileName}
-Kod:
+File: {fileName}
+Code:
 {TruncateContent(codeSnippet, 8000)}
 
-Aşağıdaki şema ile JSON döndür:
+Respond in English. Return JSON with the following schema:
 {{
     ""suggestions"": [
         {{
             ""type"": ""refactor"",
-            ""title"": ""Öneri başlığı"",
-            ""description"": ""Detaylı açıklama"",
+            ""title"": ""Suggestion title"",
+            ""description"": ""Detailed explanation"",
             ""priority"": ""Low|Medium|High|Critical"",
             ""category"": ""code_quality|performance|maintainability"",
-            ""suggestedCode"": ""Örnek kod"",
+            ""suggestedCode"": ""Example code"",
             ""impactScore"": ""1-10"",
-            ""tags"": [""etiket1"", ""etiket2""]
+            ""tags"": [""tag1"", ""tag2""]
         }}
     ]
 }}";
@@ -190,23 +190,23 @@ Aşağıdaki şema ile JSON döndür:
 
     private string CreateIssueAnalysisPrompt(string diffContent)
     {
-        return $@"Aşağıdaki diff'te potansiyel hataları, performans sorunlarını ve kod kalitesi sorunlarını tespit et.
-Her bulgu için bir öncelik ve net bir düzeltme önerisi ver.
+        return $@"Identify potential bugs, performance issues, and code quality problems in the following diff.
+For each finding, provide a priority and a clear fix suggestion.
 
-Kod:
+Code:
 {TruncateContent(diffContent, 10000)}
 
-Bu şema ile JSON döndür:
+Respond in English. Return JSON with the following schema:
 {{
     ""suggestions"": [
         {{
             ""type"": ""potential_issue"",
-            ""title"": ""Sorun başlığı"",
-            ""description"": ""Detaylı açıklama"",
+            ""title"": ""Issue title"",
+            ""description"": ""Detailed description"",
             ""priority"": ""Low|Medium|High|Critical"",
             ""category"": ""code_quality|performance|security|maintainability"",
             ""impactScore"": ""1-10"",
-            ""tags"": [""etiket1"", ""etiket2""]
+            ""tags"": [""tag1"", ""tag2""]
         }}
     ]
 }}";
@@ -214,23 +214,23 @@ Bu şema ile JSON döndür:
 
     private string CreateSecurityAnalysisPrompt(string codeSnippet)
     {
-        return $@"Güvenlik açıklarını, eşzamanlılık tehlikelerini ve async/await veya exception-handling sorunlarını bul.
-Race condition'ları, deadlock risklerini veya exception'ların yanlış kullanımını belirt.
+        return $@"Find security vulnerabilities, concurrency hazards, and issues with async/await or exception handling.
+Point out race conditions, deadlock risks, or improper exception usage.
 
-Kod:
+Code:
 {TruncateContent(codeSnippet, 8000)}
 
-Bu şema ile JSON döndür:
+Respond in English. Return JSON with the following schema:
 {{
     ""suggestions"": [
         {{
             ""type"": ""security"",
-            ""title"": ""Güvenlik sorunu başlığı"",
-            ""description"": ""Detaylı açıklama ve düzeltme"",
+            ""title"": ""Security issue title"",
+            ""description"": ""Detailed explanation and fix"",
             ""priority"": ""Low|Medium|High|Critical"",
             ""category"": ""security"",
             ""impactScore"": ""1-10"",
-            ""tags"": [""güvenlik"", ""eşzamanlılık"", ""async""]
+            ""tags"": [""security"", ""concurrency"", ""async""]
         }}
     ]
 }}";
