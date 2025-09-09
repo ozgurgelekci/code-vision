@@ -4,15 +4,16 @@ GitHub PR'larını otomatik analiz eden; Roslyn ve (opsiyonel) GPT ile özet/ön
 
 ## 🚀 Güncel Özellikler
 
-- GitHub Webhook ile otomatik tetikleme (`POST /webhook/github`)
-- Roslyn tabanlı statik analiz (kural bazlı bulgular)
-- GPT destekli özet ve öneriler (opsiyonel, anahtar yoksa devre dışı)
+- GitHub Webhook ile otomatik tetikleme (`opened/synchronize/reopened/closed`)
+- Gerçek PR diff'ini GitHub API'den alma (Accept: `application/vnd.github.v3.diff`)
+- Roslyn tabanlı statik analiz (syntax-only diagnostics; referans kaynaklı gürültü azaltıldı)
+- GPT destekli özet ve öneriler (İngilizce promptlar; Summary 12k, Issues 10k, Code 8k; fallback 500)
 - Arka plan işleyici (queue + worker)
-- Blazor Server UI (10 sn'de bir otomatik yenileme, no-cache)
- - Blazor Server UI (SignalR ile gerçek zamanlı; toast + sesli uyarı)
+- Blazor Server UI + SignalR gerçek zamanlı bildirimler (toast + ses + countdown)
+  - Eventler: `NewPullRequest`, `AnalysisUpdated`, `AnalysisCompleted`, `PullRequestClosed`
+  - InProgress kartları info (mavi) arka plan; `Details` butonu Completed olana kadar devre dışı
 - Kalite skoru (0-100)
 
-> Not: SignalR gerçek zamanlı bildirimler şu an devre dışı. UI periyodik olarak yeniler.
 
 ## 🏗️ Mimari (Özet)
 ```
@@ -26,7 +27,12 @@ GitHub → Webhook → Queue → Background Worker → PostgreSQL → API → Bl
 - `CodeVision.Infrastructure`: EF Core, servisler, queue
 - `CodeVision.UI`: Blazor Server UI
 
-## ⚡ Hızlı Başlangıç (Docker)
+## ⚡ Hızlı Başlangıç (Docker Compose - önerilen)
+```bash
+docker-compose up -d
+```
+
+## ⚡ Hızlı Başlangıç (Docker - manuel)
 ```bash
 # Ağ
 docker network create codevision-network
@@ -65,11 +71,11 @@ cd CodeVision.UI && dotnet run
     "DefaultConnection": "Host=...;Port=5432;Database=codevision_db;Username=...;Password=..."
   },
   "OpenAI": { "ApiKey": "<your-openai-key>", "Model": "gpt-4" },
-  "GitHub": { "WebhookSecret": "<your-webhook-secret>", "ApiUrl": "https://api.github.com" }
+  "GitHub": { "WebhookSecret": "<your-webhook-secret>", "Token": "<github-token>", "ApiUrl": "https://api.github.com" }
 }
 ```
 
-UI, API adresini `ApiSettings__BaseUrl` ile alır (örn. Railway API URL'si). Detay özeti (Summary) HTML render edilir; backend sanitize eder.
+UI, API adresini `ApiSettings__BaseUrl` ile alır (örn. Railway API URL'si). Detay özeti (Summary) HTML render edilir (sanitize edilir).
 
 ## 📊 API Endpoints (Güncel)
 - `POST /webhook/github`
@@ -77,13 +83,14 @@ UI, API adresini `ApiSettings__BaseUrl` ile alır (örn. Railway API URL'si). De
 - `GET /api/analyses`
 - `GET /api/analyses/{id}`
 - `GET /health`
- - SignalR Hub: `/hubs/analysis` (NewPullRequest, AnalysisUpdated, AnalysisCompleted)
+ - SignalR Hub: `/hubs/analysis` (NewPullRequest, AnalysisUpdated, AnalysisCompleted, PullRequestClosed)
 
 ## 🎯 Skor & Risk
-- Roslyn: %60 (Error -10, Warning -5, Info -1)
-- GPT: %40 (Critical -15, High -10, Medium -5, Low -2)
+- Roslyn Skoru: 100 − (Error×10 + Warning×5 + Info×1)
+- GPT Skoru: 100 − (Critical×15 + High×10 + Medium×5 + Low×2)
+- Toplam: 60% Roslyn + 40% GPT
 
-Risk: High / Medium / Low (bulgu sayısına göre)
+Risk: High / Medium / Low (Roslyn bulgularının şiddetine göre)
 
 ## 🚀 Production (Örnek)
 - Railway: Git push → auto-deploy
@@ -93,19 +100,20 @@ Risk: High / Medium / Low (bulgu sayısına göre)
 
 -----
 
-# 🔍 CodeVision - AI-powered Code Review Assistant
+# 🔍 CodeVision - AI‑powered Code Review Assistant
 
 Automatically analyzes GitHub PRs; produces Roslyn/GPT insights; processes jobs in background; displays results in a Blazor UI.
 
 ## 🚀 Features (Current)
-- GitHub webhook trigger (`POST /webhook/github`)
-- Roslyn static analysis
-- Optional GPT-based summary and suggestions
+- GitHub webhook trigger (`opened/synchronize/reopened/closed`)
+- Fetch real PR diff from GitHub API (Accept: `application/vnd.github.v3.diff`)
+- Roslyn static analysis (syntax-only diagnostics to reduce reference noise)
+- Optional GPT-based summary and suggestions (English prompts; Summary 12k, Issues 10k, Code 8k; fallback 500)
 - Background queue + worker
-- Blazor Server UI (auto-refresh every 10s, no-cache)
+- Blazor Server UI with SignalR real-time notifications (toast + sound + countdown)
+  - Events: `NewPullRequest`, `AnalysisUpdated`, `AnalysisCompleted`, `PullRequestClosed`
+  - InProgress cards use info (blue) background; `Details` is enabled only when Completed
 - Quality score (0-100)
-
-> Note: SignalR real-time notifications are disabled for now. UI polls periodically.
 
 ## 🏗️ Architecture
 ```
@@ -113,7 +121,12 @@ GitHub → Webhook → Queue → Background Worker → PostgreSQL → API → Bl
                                ↳ Roslyn / GPT
 ```
 
-## ⚡ Quick Start (Docker)
+## ⚡ Quick Start (Docker Compose - recommended)
+```bash
+docker-compose up -d
+```
+
+## ⚡ Quick Start (Docker - manual)
 ```bash
 docker network create codevision-network
 
@@ -137,7 +150,7 @@ docker run -d --name codevision_ui --network codevision-network -p 3001:8080 \
 {
   "ConnectionStrings": { "DefaultConnection": "Host=...;Port=5432;Database=codevision_db;Username=...;Password=..." },
   "OpenAI": { "ApiKey": "<your-openai-key>", "Model": "gpt-4" },
-  "GitHub": { "WebhookSecret": "<your-webhook-secret>", "ApiUrl": "https://api.github.com" }
+  "GitHub": { "WebhookSecret": "<your-webhook-secret>", "Token": "<github-token>", "ApiUrl": "https://api.github.com" }
 }
 ```
 
@@ -149,8 +162,7 @@ docker run -d --name codevision_ui --network codevision-network -p 3001:8080 \
 - `GET /health`
 
 ## 📝 Notes
-- UI disables caching and adds a cache-buster on requests
-- Auto-refresh every 10 seconds (paused when modal is open)
+- UI updates in real-time via SignalR; no manual refresh required
 - Keep secrets in environment variables (do not commit)
 
 ## 📄 License
