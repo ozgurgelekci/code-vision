@@ -343,7 +343,7 @@ Respond in English. Return JSON with the following schema:
         if (content.Length <= maxLength)
             return content;
             
-        return content[..maxLength] + "\n... (content truncated)";
+        return content[..maxLength];
     }
 
     private static SuggestionType? ParseSuggestionType(string? typeStr)
