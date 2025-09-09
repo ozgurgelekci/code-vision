@@ -78,6 +78,17 @@ public class AnalysisBackgroundService : BackgroundService
             analysis.Status = AnalysisStatus.InProgress;
             await analysisService.UpdateAnalysisAsync(analysis);
             
+            // Broadcast status update (InProgress)
+            try
+            {
+                var hubStarted = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.SignalR.IHubContext<CodeVision.Infrastructure.Hubs.AnalysisNotificationHub>>();
+                await hubStarted.Clients.All.SendCoreAsync("AnalysisUpdated", new object[] { analysis.Id }, default);
+            }
+            catch (Exception hubEx)
+            {
+                _logger.LogWarning(hubEx, "AnalysisUpdated hub notification failed (InProgress)");
+            }
+            
             // Send started notification
             // await notificationService.SendAnalysisStartedAsync(analysis.Id);
 

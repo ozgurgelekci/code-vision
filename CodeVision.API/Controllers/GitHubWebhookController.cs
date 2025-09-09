@@ -4,7 +4,7 @@ using CodeVision.API.Models;
 using CodeVision.Core.Interfaces;
 using CodeVision.Core.Models;
 using Microsoft.AspNetCore.SignalR;
-using CodeVision.API.Hubs;
+using CodeVision.Infrastructure.Hubs;
 
 namespace CodeVision.API.Controllers;
 
