@@ -114,7 +114,7 @@ public class AnalysisBackgroundService : BackgroundService
             try
             {
                 var hub = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.SignalR.IHubContext<CodeVision.Infrastructure.Hubs.AnalysisNotificationHub>>();
-                await hub.Clients.All.SendAsync("AnalysisCompleted", analysis.Id);
+                await hub.Clients.All.SendCoreAsync("AnalysisCompleted", new object[] { analysis.Id }, default);
             }
             catch (Exception hubEx)
             {
